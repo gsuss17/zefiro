@@ -1,0 +1,49 @@
+INICIO becas;
+
+    // Declaración e inicialización de variables
+    ENTERO aceptados = 0;
+    ENTERO rechazados_edad = 0;
+    ENTERO rechazados_ingreso = 0;
+    ENTERO rechazados_promedio = 0;
+    ENTERO i = 0;
+    ENTERO edad = 0;
+    ENTERO ingreso = 0;
+    ENTERO promedio = 0;
+
+    MIENTRAS (i < 5)
+        IMPRIMIR("--- Evaluando Alumno ---");
+        IMPRIMIR("Ingresa la edad (Debe ser > 18 y < 25):");
+        LEER(edad);
+        IMPRIMIR("Ingresa el ingreso mensual (Debe ser < 5000):");
+        LEER(ingreso);
+        IMPRIMIR("Ingresa el promedio (Debe ser 90 a 100):");
+        LEER(promedio);
+
+        SI (edad <= 18 O edad >= 25)
+            rechazados_edad = rechazados_edad + 1;
+        SINO
+            SI (ingreso >= 5000)
+                rechazados_ingreso = rechazados_ingreso + 1;
+            SINO
+                SI (promedio < 90 O promedio > 100)
+                    rechazados_promedio = rechazados_promedio + 1;
+                SINO
+                    aceptados = aceptados + 1;
+                FINSI;
+            FINSI;
+        FINSI;
+
+        i = i + 1;
+    FINMIENTRAS;
+
+    IMPRIMIR("--- RESULTADOS FINALES ---");
+    IMPRIMIR("Alumnos Aceptados:");
+    IMPRIMIR(aceptados);
+    IMPRIMIR("Rechazados por edad:");
+    IMPRIMIR(rechazados_edad);
+    IMPRIMIR("Rechazados por ingreso:");
+    IMPRIMIR(rechazados_ingreso);
+    IMPRIMIR("Rechazados por promedio:");
+    IMPRIMIR(rechazados_promedio);
+
+FIN;
