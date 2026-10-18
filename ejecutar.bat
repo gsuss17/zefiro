@@ -30,6 +30,6 @@ if %errorlevel% neq 0 (
 
 echo [4/4] Ejecutando analisis lexico y sintactico...
 echo.
-java -cp ".;lib/java-cup-11b-runtime.jar" Main codigo.zefiro
+java -cp ".;lib/java-cup-11b-runtime.jar" Main becas.zefiro
 echo.
 pause
