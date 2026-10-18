@@ -28,7 +28,7 @@ public class Main {
             Token token;
 
             while ((token = lexer.yylex()) != null) {
-                if ("ERROR".equals(token.getTipo())) {
+                if (token.getTipo().startsWith("ERROR")) {
                     listaErrores.add(token);
                 } else {
                     totalTokensValidos++;
@@ -58,9 +58,10 @@ public class Main {
             System.out.println("--------------------------------------------------------------------------");
 
             for (Token err : listaErrores) {
-                System.out.printf("%-8d | %-8d | Carácter no reconocido: '%s'%n", 
+                System.out.printf("%-8d | %-8d | %-25s | Lexema: '%s'%n", 
                     err.getLinea(), 
-                    err.getColumna(), 
+                    err.getColumna(),
+                    err.getTipo(),
                     err.getLexema()
                 );
             }

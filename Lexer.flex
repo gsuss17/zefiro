@@ -17,15 +17,20 @@
 %}
 
 /* Expresiones Regulares Base */
-LetraMin      = [a-z]
-LetraMay      = [A-Z]
-Digito        = [0-9]
-Id            = {LetraMin}({LetraMin}|{LetraMay}|{Digito}|_)*
-Entero        = {Digito}+
-Decimal       = {Digito}+\.{Digito}+
-Cadena        = \"([^\"\\\n\r]|(\\.))*\"
-Espacio       = [ \t\r\n\f]+
-Comentario    = \/\/[^\r\n]*
+LetraMin          = [a-z]
+LetraMay          = [A-Z]
+Digito            = [0-9]
+Id                = {LetraMin}({LetraMin}|{LetraMay}|{Digito}|_)*
+Entero            = {Digito}+
+Decimal           = {Digito}+\.{Digito}+
+Cadena            = \"([^\"\\\n\r]|(\\.))*\"
+Espacio           = [ \t\r\n\f]+
+Comentario        = \/\/[^\r\n]*
+
+/* Expresiones de Error Léxico Específico */
+CadenaSinCerrar   = \"([^\"\\\r\n]|(\\.))*
+DecimalInvalido   = {Digito}+\.
+IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
 
 %%
 
@@ -85,10 +90,29 @@ Comentario    = \/\/[^\r\n]*
     {Espacio}         { /* Ignorar */ }
     {Comentario}      { /* Ignorar */ }
 
-    /* Manejo de errores léxicos */
+    /* Manejo de Errores Léxicos */
+    {DecimalInvalido} {
+        erroresLexicos++;
+        System.err.println("Error léxico en Línea: " + (yyline + 1) + ", Columna: " + (yycolumn + 1) + ". Número decimal incompleto: " + yytext());
+        return token("ERROR_DECIMAL_INCOMPLETO");
+    }
+
+    {CadenaSinCerrar} {
+        erroresLexicos++;
+        System.err.println("Error léxico en Línea: " + (yyline + 1) + ", Columna: " + (yycolumn + 1) + ". Cadena de texto no cerrada: " + yytext());
+        return token("ERROR_CADENA_NO_CERRADA");
+    }
+
+    {IdInvalido} {
+        erroresLexicos++;
+        System.err.println("Error léxico en Línea: " + (yyline + 1) + ", Columna: " + (yycolumn + 1) + ". Identificador o palabra no permitida (inicia en mayúscula): " + yytext());
+        return token("ERROR_ID_INVALIDO");
+    }
+
+    /* Error Léxico General (Cualquier símbolo extraño restante) */
     . { 
         erroresLexicos++;
         System.err.println("Error léxico en Línea: " + (yyline + 1) + ", Columna: " + (yycolumn + 1) + ". Carácter no válido: " + yytext());
-        return token("ERROR"); 
+        return token("ERROR_SIMBOLO"); 
     }
 }
