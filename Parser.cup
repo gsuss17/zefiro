@@ -1,0 +1,157 @@
+import java_cup.runtime.*;
+
+parser code {:
+    public int erroresSintacticos = 0;
+
+    @Override
+    public void syntax_error(Symbol s) {
+        erroresSintacticos++;
+        String nombreToken = (s.sym >= 0 && s.sym < sym.terminalNames.length) 
+                             ? sym.terminalNames[s.sym] 
+                             : ("TOKEN_" + s.sym);
+        String lexema = (s.value != null) ? s.value.toString() : nombreToken;
+        System.out.println(" -> Error sintáctico en Línea " + s.left + ", Columna " + s.right + 
+                           ". No se esperaba: '" + lexema + "' (Token: " + nombreToken + ")");
+    }
+
+    @Override
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception {
+        erroresSintacticos++;
+        System.out.println(" -> Error sintáctico fatal en Línea " + s.left + ", Columna " + s.right + 
+                           ". No se pudo recuperar el análisis.");
+    }
+:};
+
+/* Terminales */
+terminal PR_INICIO, PR_FIN;
+terminal PR_TIPO_ENT, PR_TIPO_DEC, PR_TIPO_CAD, PR_TIPO_BOOL;
+terminal LIT_VERDADERO, LIT_FALSO;
+terminal PR_SI, PR_SINO, PR_FINSI;
+terminal PR_MIENTRAS, PR_FIN_MIE;
+terminal PR_LEER, PR_IMPRIMIR;
+
+terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
+terminal OP_ASIGNA;
+terminal OP_IGUAL, OP_DIFERENTE, OP_MENOR, OP_MENOR_IGUAL, OP_MAYOR, OP_MAYOR_IGUAL;
+terminal OP_Y, OP_O, OP_NO;
+
+terminal DEL_P_COMA, DEL_COMA, DEL_PAR_IZQ, DEL_PAR_DER;
+
+terminal String ID;
+terminal String LIT_ENTERO;
+terminal String LIT_DECIMAL;
+terminal String LIT_CADENA;
+
+terminal MENOS_UNARIO;
+
+/* No Terminales */
+non terminal programa;
+non terminal lista_sentencias, sentencia;
+non terminal tipo, declaracion, lista_vars, var_item;
+non terminal asignacion, condicional, ciclo, lectura, escritura;
+non terminal expresion;
+
+/* Precedencia y Asociatividad */
+precedence left OP_O;
+precedence left OP_Y;
+precedence right OP_NO;
+precedence left OP_IGUAL, OP_DIFERENTE;
+precedence left OP_MENOR, OP_MENOR_IGUAL, OP_MAYOR, OP_MAYOR_IGUAL;
+precedence left OP_SUMA, OP_RESTA;
+precedence left OP_MULT, OP_DIV;
+precedence right MENOS_UNARIO;
+
+/* Símbolo Inicial */
+start with programa;
+
+/* Reglas Gramaticales */
+programa ::= 
+    PR_INICIO ID DEL_P_COMA lista_sentencias PR_FIN DEL_P_COMA
+;
+
+lista_sentencias ::= 
+    lista_sentencias sentencia
+    | sentencia
+;
+
+sentencia ::= 
+    declaracion DEL_P_COMA
+    | asignacion DEL_P_COMA
+    | condicional
+    | ciclo
+    | lectura DEL_P_COMA
+    | escritura DEL_P_COMA
+    | error DEL_P_COMA
+;
+
+tipo ::= 
+    PR_TIPO_ENT
+    | PR_TIPO_DEC
+    | PR_TIPO_CAD
+    | PR_TIPO_BOOL
+;
+
+declaracion ::= 
+    tipo lista_vars
+    | tipo error
+;
+
+lista_vars ::= 
+    lista_vars DEL_COMA var_item
+    | var_item
+;
+
+var_item ::= 
+    ID
+    | ID OP_ASIGNA expresion
+;
+
+asignacion ::= 
+    ID OP_ASIGNA expresion
+    | ID error
+;
+
+condicional ::= 
+    PR_SI DEL_PAR_IZQ expresion DEL_PAR_DER lista_sentencias PR_FINSI DEL_P_COMA
+    | PR_SI DEL_PAR_IZQ expresion DEL_PAR_DER lista_sentencias PR_SINO lista_sentencias PR_FINSI DEL_P_COMA
+    | PR_SI error PR_FINSI DEL_P_COMA
+;
+
+ciclo ::= 
+    PR_MIENTRAS DEL_PAR_IZQ expresion DEL_PAR_DER lista_sentencias PR_FIN_MIE DEL_P_COMA
+    | PR_MIENTRAS error PR_FIN_MIE DEL_P_COMA
+;
+
+lectura ::= 
+    PR_LEER DEL_PAR_IZQ ID DEL_PAR_DER
+    | PR_LEER error
+;
+
+escritura ::= 
+    PR_IMPRIMIR DEL_PAR_IZQ expresion DEL_PAR_DER
+    | PR_IMPRIMIR error
+;
+
+expresion ::= 
+    expresion OP_SUMA expresion
+    | expresion OP_RESTA expresion
+    | expresion OP_MULT expresion
+    | expresion OP_DIV expresion
+    | expresion OP_IGUAL expresion
+    | expresion OP_DIFERENTE expresion
+    | expresion OP_MENOR expresion
+    | expresion OP_MENOR_IGUAL expresion
+    | expresion OP_MAYOR expresion
+    | expresion OP_MAYOR_IGUAL expresion
+    | expresion OP_Y expresion
+    | expresion OP_O expresion
+    | OP_NO expresion
+    | OP_RESTA expresion %prec MENOS_UNARIO
+    | DEL_PAR_IZQ expresion DEL_PAR_DER
+    | ID
+    | LIT_ENTERO
+    | LIT_DECIMAL
+    | LIT_CADENA
+    | LIT_VERDADERO
+    | LIT_FALSO
+;

@@ -1,0 +1,64 @@
+<programa>              ::= PR_INICIO ID DEL_P_COMA <lista_sentencias> PR_FIN DEL_P_COMA
+
+<lista_sentencias>      ::= <lista_sentencias> <sentencia>
+                          | <sentencia>
+
+<sentencia>             ::= <declaracion> DEL_P_COMA
+                          | <asignacion> DEL_P_COMA
+                          | <condicional>
+                          | <ciclo>
+                          | <lectura> DEL_P_COMA
+                          | <escritura> DEL_P_COMA
+                          | error DEL_P_COMA
+
+<tipo>                  ::= PR_TIPO_ENT
+                          | PR_TIPO_DEC
+                          | PR_TIPO_CAD
+                          | PR_TIPO_BOOL
+
+<declaracion>           ::= <tipo> <lista_vars>
+                          | <tipo> error
+
+<lista_vars>            ::= <lista_vars> DEL_COMA <var_item>
+                          | <var_item>
+
+<var_item>              ::= ID
+                          | ID OP_ASIGNA <expresion>
+
+<asignacion>            ::= ID OP_ASIGNA <expresion>
+                          | ID error
+
+<condicional>           ::= PR_SI DEL_PAR_IZQ <expresion> DEL_PAR_DER <lista_sentencias> PR_FINSI DEL_P_COMA
+                          | PR_SI DEL_PAR_IZQ <expresion> DEL_PAR_DER <lista_sentencias> PR_SINO <lista_sentencias> PR_FINSI DEL_P_COMA
+                          | PR_SI error PR_FINSI DEL_P_COMA
+
+<ciclo>                 ::= PR_MIENTRAS DEL_PAR_IZQ <expresion> DEL_PAR_DER <lista_sentencias> PR_FIN_MIE DEL_P_COMA
+                          | PR_MIENTRAS error PR_FIN_MIE DEL_P_COMA
+
+<lectura>               ::= PR_LEER DEL_PAR_IZQ ID DEL_PAR_DER
+                          | PR_LEER error
+
+<escritura>             ::= PR_IMPRIMIR DEL_PAR_IZQ <expresion> DEL_PAR_DER
+                          | PR_IMPRIMIR error
+
+<expresion>             ::= <expresion> OP_SUMA <expresion>
+                          | <expresion> OP_RESTA <expresion>
+                          | <expresion> OP_MULT <expresion>
+                          | <expresion> OP_DIV <expresion>
+                          | <expresion> OP_IGUAL <expresion>
+                          | <expresion> OP_DIFERENTE <expresion>
+                          | <expresion> OP_MENOR <expresion>
+                          | <expresion> OP_MENOR_IGUAL <expresion>
+                          | <expresion> OP_MAYOR <expresion>
+                          | <expresion> OP_MAYOR_IGUAL <expresion>
+                          | <expresion> OP_Y <expresion>
+                          | <expresion> OP_O <expresion>
+                          | OP_NO <expresion>
+                          | OP_RESTA <expresion> %prec MENOS_UNARIO
+                          | DEL_PAR_IZQ <expresion> DEL_PAR_DER
+                          | ID
+                          | LIT_ENTERO
+                          | LIT_DECIMAL
+                          | LIT_CADENA
+                          | LIT_VERDADERO
+                          | LIT_FALSO
