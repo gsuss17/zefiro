@@ -7,7 +7,7 @@ import java_cup.runtime.Symbol;
 public class Main {
 
     public static void main(String[] args) {
-        String archivoFuente = (args.length > 0) ? args[0] : "codigo.zefiro";
+        String archivoFuente = (args.length > 0) ? args[0] : "becas.zefiro";
         File archivo = new File(archivoFuente);
 
         if (!archivo.exists()) {
