@@ -3,3 +3,6 @@ Lexer.java
 parser.java
 sym.java
 Lexer.java~
+*.dot
+*.png
+*.svg
