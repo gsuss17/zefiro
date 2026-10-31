@@ -1,5 +1,4 @@
 @echo off
-:: Configurar la consola en UTF-8 para mostrar correctamente acentos y ramas del AST (├──, └──)
 chcp 65001 >nul
 cls
 
@@ -36,7 +35,7 @@ if %errorlevel% neq 0 (
 
 echo [4/5] Ejecutando analisis lexico y sintactico...
 echo.
-java -cp ".;lib/java-cup-11b-runtime.jar" Main becas.zefiro
+java -Dfile.encoding=UTF-8 -cp ".;lib/java-cup-11b-runtime.jar" Main becas.zefiro
 echo.
 
 if exist arbol_ast.dot (
@@ -49,7 +48,7 @@ if exist arbol_ast.dot (
             echo [EXITO] Imagenes generadas: arbol_ast.png y arbol_ast.svg
             start "" arbol_ast.png
         ) else (
-            echo [AVISO] No se pudo sobrescribir 'arbol_ast.png'. Cierra el visor de imagenes anterior antes de recompilar.
+            echo [AVISO] No se pudo sobrescribir 'arbol_ast.png'. Cierra el visor de imagenes antes de recompilar.
         )
     ) else (
         if exist "C:\Program Files\Graphviz\bin\dot.exe" (
@@ -59,7 +58,7 @@ if exist arbol_ast.dot (
                 echo [EXITO] Imagenes generadas: arbol_ast.png y arbol_ast.svg
                 start "" arbol_ast.png
             ) else (
-                echo [AVISO] No se pudo sobrescribir 'arbol_ast.png'. Cierra el visor de imagenes anterior antes de recompilar.
+                echo [AVISO] No se pudo sobrescribir 'arbol_ast.png'. Cierra el visor de imagenes antes de recompilar.
             )
         ) else (
             echo [AVISO] Graphviz no esta instalado o no esta en el PATH del sistema.

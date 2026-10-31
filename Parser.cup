@@ -11,14 +11,60 @@ parser code {:
                              ? sym.terminalNames[s.sym] 
                              : ("TOKEN_" + s.sym);
         String lexema = (s.value != null) ? s.value.toString() : nombreToken;
+
+        // Lista de tokens válidos que CUP esperaba en esta posición
+        java.util.List<Integer> idsEsperados = expected_token_ids();
+        java.util.List<String> nombresEsperados = new java.util.ArrayList<>();
+
+        for (int id : idsEsperados) {
+            if (id != sym.error && id >= 0 && id < sym.terminalNames.length) {
+                nombresEsperados.add(describirToken(id, sym.terminalNames[id]));
+            }
+        }
+
+        String listaEsperados = nombresEsperados.isEmpty() 
+                                ? "Ninguno" 
+                                : String.join(", ", nombresEsperados);
+
         System.out.println(" -> Error sintáctico en Línea " + s.left + ", Columna " + s.right + 
-                           ". No se esperaba: '" + lexema + "' (Token: " + nombreToken + ")");
+                           ". No se esperaba: '" + lexema + "' (" + nombreToken + ")");
+        System.out.println("    Tokens válidos esperados en esta posición: [ " + listaEsperados + " ]");
     }
 
     @Override
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception {
         System.out.println(" -> Error sintáctico fatal en Línea " + s.left + ", Columna " + s.right + 
                            ". No se pudo recuperar el análisis.");
+    }
+
+    private String describirToken(int id, String nombre) {
+        switch (nombre) {
+            case "DEL_P_COMA": return "';'";
+            case "DEL_COMA": return "','";
+            case "DEL_PAR_IZQ": return "'('";
+            case "DEL_PAR_DER": return "')'";
+            case "OP_ASIGNA": return "'='";
+            case "OP_SUMA": return "'+'";
+            case "OP_RESTA": return "'-'";
+            case "OP_MULT": return "'*'";
+            case "OP_DIV": return "'/'";
+            case "OP_IGUAL": return "'=='";
+            case "OP_DIFERENTE": return "'!='";
+            case "OP_MENOR": return "'<'";
+            case "OP_MENOR_IGUAL": return "'<='";
+            case "OP_MAYOR": return "'>'";
+            case "OP_MAYOR_IGUAL": return "'>='";
+            case "OP_Y": return "'Y'";
+            case "OP_O": return "'O'";
+            case "OP_NO": return "'NO'";
+            case "ID": return "Identificador";
+            case "LIT_ENTERO": return "Número Entero";
+            case "LIT_DECIMAL": return "Número Decimal";
+            case "LIT_CADENA": return "Texto";
+            case "LIT_VERDADERO": return "'VERDADERO'";
+            case "LIT_FALSO": return "'FALSO'";
+            default: return nombre;
+        }
     }
 :};
 
@@ -145,10 +191,30 @@ sentencia ::=
 ;
 
 tipo ::= 
-    PR_TIPO_ENT    {: RESULT = new Nodo("PR_TIPO_ENT", "ENTERO"); :}
-    | PR_TIPO_DEC  {: RESULT = new Nodo("PR_TIPO_DEC", "DECIMAL"); :}
-    | PR_TIPO_CAD  {: RESULT = new Nodo("PR_TIPO_CAD", "CADENA"); :}
-    | PR_TIPO_BOOL {: RESULT = new Nodo("PR_TIPO_BOOL", "BOOLEANO"); :}
+    PR_TIPO_ENT
+    {:
+        Nodo n = new Nodo("TIPO");
+        n.agregarHijo(new Nodo("PR_TIPO_ENT", "ENTERO"));
+        RESULT = n;
+    :}
+    | PR_TIPO_DEC
+    {:
+        Nodo n = new Nodo("TIPO");
+        n.agregarHijo(new Nodo("PR_TIPO_DEC", "DECIMAL"));
+        RESULT = n;
+    :}
+    | PR_TIPO_CAD
+    {:
+        Nodo n = new Nodo("TIPO");
+        n.agregarHijo(new Nodo("PR_TIPO_CAD", "CADENA"));
+        RESULT = n;
+    :}
+    | PR_TIPO_BOOL
+    {:
+        Nodo n = new Nodo("TIPO");
+        n.agregarHijo(new Nodo("PR_TIPO_BOOL", "BOOLEANO"));
+        RESULT = n;
+    :}
 ;
 
 declaracion ::= 

@@ -34,14 +34,14 @@ public class Nodo {
     }
 
     // =========================================================================
-    // 1. EXPORTACIÓN A GRAPHVIZ (.DOT) CON UTF-8
+    // 1. EXPORTACIÓN A GRAPHVIZ (.DOT) CON UTF-8 Y ORDEN ESTRICTO
     // =========================================================================
     public void exportarDot(String rutaArchivo) throws IOException {
-        // Se fuerza codificación UTF-8 para garantizar que Graphviz interprete acentos y caracteres especiales
         try (PrintWriter out = new PrintWriter(
                 new OutputStreamWriter(new FileOutputStream(rutaArchivo), StandardCharsets.UTF_8))) {
             out.println("digraph AST {");
             out.println("    rankdir=TB;");
+            out.println("    ordering=out;"); // Fuerza orden estricto de izquierda a derecha
             out.println("    node [shape=box, style=\"rounded,filled\", fillcolor=\"#EBF5FB\", fontname=\"Consolas\", fontsize=11, color=\"#2874A6\"];");
             out.println("    edge [color=\"#566573\", arrowsize=0.7];");
             generarNodosDot(out);
@@ -55,7 +55,6 @@ public class Nodo {
             textoMostrar += "\\n(" + sanitizarTextoDot(valor) + ")";
         }
 
-        // Color distintivo: azul suave para nodos internos, amarillo claro para hojas con valor
         String colorRelleno = !hijos.isEmpty() ? "#EBF5FB" : "#FEF9E7";
         String colorBorde   = !hijos.isEmpty() ? "#2874A6" : "#B7950B";
 
