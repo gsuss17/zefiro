@@ -17,7 +17,6 @@ parser code {:
 
     @Override
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception {
-        erroresSintacticos++;
         System.out.println(" -> Error sintáctico fatal en Línea " + s.left + ", Columna " + s.right + 
                            ". No se pudo recuperar el análisis.");
     }
@@ -65,12 +64,17 @@ precedence right MENOS_UNARIO;
 /* Símbolo Inicial */
 start with programa;
 
-/* Reglas Gramaticales con Construcción del AST */
+/* Reglas Gramaticales con Construcción de Hojas de Lexemas */
 programa ::= 
     PR_INICIO ID:id DEL_P_COMA lista_sentencias:ls PR_FIN DEL_P_COMA
     {:
-        Nodo n = new Nodo("PROGRAMA", id);
+        Nodo n = new Nodo("PROGRAMA");
+        n.agregarHijo(new Nodo("PR_INICIO", "INICIO"));
+        n.agregarHijo(new Nodo("ID", id));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
         n.agregarHijo(ls);
+        n.agregarHijo(new Nodo("PR_FIN", "FIN"));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
         parser.raizAST = n;
         RESULT = n;
     :}
@@ -84,27 +88,67 @@ lista_sentencias ::=
     :}
     | sentencia:s
     {:
-        Nodo n = new Nodo("SENTENCIAS");
+        Nodo n = new Nodo("LISTA_SENTENCIAS");
         n.agregarHijo(s);
         RESULT = n;
     :}
 ;
 
 sentencia ::= 
-    declaracion:d DEL_P_COMA {: RESULT = d; :}
-    | asignacion:a DEL_P_COMA {: RESULT = a; :}
-    | condicional:c {: RESULT = c; :}
-    | ciclo:m {: RESULT = m; :}
-    | lectura:l DEL_P_COMA {: RESULT = l; :}
-    | escritura:e DEL_P_COMA {: RESULT = e; :}
-    | error DEL_P_COMA {: RESULT = new Nodo("ERROR_SINTACTICO"); :}
+    declaracion:d DEL_P_COMA
+    {:
+        Nodo n = new Nodo("SENTENCIA");
+        n.agregarHijo(d);
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
+        RESULT = n;
+    :}
+    | asignacion:a DEL_P_COMA
+    {:
+        Nodo n = new Nodo("SENTENCIA");
+        n.agregarHijo(a);
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
+        RESULT = n;
+    :}
+    | condicional:c
+    {:
+        Nodo n = new Nodo("SENTENCIA");
+        n.agregarHijo(c);
+        RESULT = n;
+    :}
+    | ciclo:m
+    {:
+        Nodo n = new Nodo("SENTENCIA");
+        n.agregarHijo(m);
+        RESULT = n;
+    :}
+    | lectura:l DEL_P_COMA
+    {:
+        Nodo n = new Nodo("SENTENCIA");
+        n.agregarHijo(l);
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
+        RESULT = n;
+    :}
+    | escritura:e DEL_P_COMA
+    {:
+        Nodo n = new Nodo("SENTENCIA");
+        n.agregarHijo(e);
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
+        RESULT = n;
+    :}
+    | error DEL_P_COMA
+    {:
+        Nodo n = new Nodo("SENTENCIA");
+        n.agregarHijo(new Nodo("ERROR_SINTACTICO"));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
+        RESULT = n;
+    :}
 ;
 
 tipo ::= 
-    PR_TIPO_ENT    {: RESULT = new Nodo("TIPO", "ENTERO"); :}
-    | PR_TIPO_DEC  {: RESULT = new Nodo("TIPO", "DECIMAL"); :}
-    | PR_TIPO_CAD  {: RESULT = new Nodo("TIPO", "CADENA"); :}
-    | PR_TIPO_BOOL {: RESULT = new Nodo("TIPO", "BOOLEANO"); :}
+    PR_TIPO_ENT    {: RESULT = new Nodo("PR_TIPO_ENT", "ENTERO"); :}
+    | PR_TIPO_DEC  {: RESULT = new Nodo("PR_TIPO_DEC", "DECIMAL"); :}
+    | PR_TIPO_CAD  {: RESULT = new Nodo("PR_TIPO_CAD", "CADENA"); :}
+    | PR_TIPO_BOOL {: RESULT = new Nodo("PR_TIPO_BOOL", "BOOLEANO"); :}
 ;
 
 declaracion ::= 
@@ -115,18 +159,25 @@ declaracion ::=
         n.agregarHijo(lv);
         RESULT = n;
     :}
-    | tipo error {: RESULT = new Nodo("ERROR_DECLARACION"); :}
+    | tipo:t error
+    {:
+        Nodo n = new Nodo("DECLARACION");
+        n.agregarHijo(t);
+        n.agregarHijo(new Nodo("ERROR_DECLARACION"));
+        RESULT = n;
+    :}
 ;
 
 lista_vars ::= 
     lista_vars:lv DEL_COMA var_item:vi
     {:
+        lv.agregarHijo(new Nodo("DEL_COMA", ","));
         lv.agregarHijo(vi);
         RESULT = lv;
     :}
     | var_item:vi
     {:
-        Nodo n = new Nodo("VARIABLES");
+        Nodo n = new Nodo("LISTA_VARS");
         n.agregarHijo(vi);
         RESULT = n;
     :}
@@ -135,13 +186,13 @@ lista_vars ::=
 var_item ::= 
     ID:id
     {:
-        Nodo n = new Nodo("VARIABLE");
+        Nodo n = new Nodo("VAR_ITEM");
         n.agregarHijo(new Nodo("ID", id));
         RESULT = n;
     :}
     | ID:id OP_ASIGNA expresion:e
     {:
-        Nodo n = new Nodo("VARIABLE");
+        Nodo n = new Nodo("VAR_ITEM");
         n.agregarHijo(new Nodo("ID", id));
         n.agregarHijo(new Nodo("OP_ASIGNA", "="));
         n.agregarHijo(e);
@@ -158,114 +209,257 @@ asignacion ::=
         n.agregarHijo(e);
         RESULT = n;
     :}
-    | ID error {: RESULT = new Nodo("ERROR_ASIGNACION"); :}
+    | ID:id error
+    {:
+        Nodo n = new Nodo("ASIGNACION");
+        n.agregarHijo(new Nodo("ID", id));
+        n.agregarHijo(new Nodo("ERROR_ASIGNACION"));
+        RESULT = n;
+    :}
 ;
 
 condicional ::= 
     PR_SI DEL_PAR_IZQ expresion:cond DEL_PAR_DER lista_sentencias:ls PR_FINSI DEL_P_COMA
     {:
-        Nodo n = new Nodo("SI");
-        Nodo nCond = new Nodo("CONDICION");
-        nCond.agregarHijo(cond);
-        Nodo nEntonces = new Nodo("ENTONCES");
-        nEntonces.agregarHijo(ls);
-        n.agregarHijo(nCond);
-        n.agregarHijo(nEntonces);
+        Nodo n = new Nodo("CONDICIONAL");
+        n.agregarHijo(new Nodo("PR_SI", "SI"));
+        n.agregarHijo(new Nodo("DEL_PAR_IZQ", "("));
+        n.agregarHijo(cond);
+        n.agregarHijo(new Nodo("DEL_PAR_DER", ")"));
+        n.agregarHijo(ls);
+        n.agregarHijo(new Nodo("PR_FINSI", "FINSI"));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
         RESULT = n;
     :}
     | PR_SI DEL_PAR_IZQ expresion:cond DEL_PAR_DER lista_sentencias:ls1 PR_SINO lista_sentencias:ls2 PR_FINSI DEL_P_COMA
     {:
-        Nodo n = new Nodo("SI_SINO");
-        Nodo nCond = new Nodo("CONDICION");
-        nCond.agregarHijo(cond);
-        Nodo nEntonces = new Nodo("ENTONCES");
-        nEntonces.agregarHijo(ls1);
-        Nodo nSino = new Nodo("SINO");
-        nSino.agregarHijo(ls2);
-        n.agregarHijo(nCond);
-        n.agregarHijo(nEntonces);
-        n.agregarHijo(nSino);
+        Nodo n = new Nodo("CONDICIONAL");
+        n.agregarHijo(new Nodo("PR_SI", "SI"));
+        n.agregarHijo(new Nodo("DEL_PAR_IZQ", "("));
+        n.agregarHijo(cond);
+        n.agregarHijo(new Nodo("DEL_PAR_DER", ")"));
+        n.agregarHijo(ls1);
+        n.agregarHijo(new Nodo("PR_SINO", "SINO"));
+        n.agregarHijo(ls2);
+        n.agregarHijo(new Nodo("PR_FINSI", "FINSI"));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
         RESULT = n;
     :}
-    | PR_SI error PR_FINSI DEL_P_COMA {: RESULT = new Nodo("ERROR_SI"); :}
+    | PR_SI error PR_FINSI DEL_P_COMA
+    {:
+        Nodo n = new Nodo("CONDICIONAL");
+        n.agregarHijo(new Nodo("PR_SI", "SI"));
+        n.agregarHijo(new Nodo("ERROR_CONDICIONAL"));
+        n.agregarHijo(new Nodo("PR_FINSI", "FINSI"));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
+        RESULT = n;
+    :}
 ;
 
 ciclo ::= 
     PR_MIENTRAS DEL_PAR_IZQ expresion:cond DEL_PAR_DER lista_sentencias:ls PR_FIN_MIE DEL_P_COMA
     {:
-        Nodo n = new Nodo("MIENTRAS");
-        Nodo nCond = new Nodo("CONDICION");
-        nCond.agregarHijo(cond);
-        Nodo nCuerpo = new Nodo("CUERPO");
-        nCuerpo.agregarHijo(ls);
-        n.agregarHijo(nCond);
-        n.agregarHijo(nCuerpo);
+        Nodo n = new Nodo("CICLO");
+        n.agregarHijo(new Nodo("PR_MIENTRAS", "MIENTRAS"));
+        n.agregarHijo(new Nodo("DEL_PAR_IZQ", "("));
+        n.agregarHijo(cond);
+        n.agregarHijo(new Nodo("DEL_PAR_DER", ")"));
+        n.agregarHijo(ls);
+        n.agregarHijo(new Nodo("PR_FIN_MIE", "FINMIENTRAS"));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
         RESULT = n;
     :}
-    | PR_MIENTRAS error PR_FIN_MIE DEL_P_COMA {: RESULT = new Nodo("ERROR_MIENTRAS"); :}
+    | PR_MIENTRAS error PR_FIN_MIE DEL_P_COMA
+    {:
+        Nodo n = new Nodo("CICLO");
+        n.agregarHijo(new Nodo("PR_MIENTRAS", "MIENTRAS"));
+        n.agregarHijo(new Nodo("ERROR_CICLO"));
+        n.agregarHijo(new Nodo("PR_FIN_MIE", "FINMIENTRAS"));
+        n.agregarHijo(new Nodo("DEL_P_COMA", ";"));
+        RESULT = n;
+    :}
 ;
 
 lectura ::= 
     PR_LEER DEL_PAR_IZQ ID:id DEL_PAR_DER
     {:
-        Nodo n = new Nodo("LEER");
+        Nodo n = new Nodo("LECTURA");
+        n.agregarHijo(new Nodo("PR_LEER", "LEER"));
+        n.agregarHijo(new Nodo("DEL_PAR_IZQ", "("));
         n.agregarHijo(new Nodo("ID", id));
+        n.agregarHijo(new Nodo("DEL_PAR_DER", ")"));
         RESULT = n;
     :}
-    | PR_LEER error {: RESULT = new Nodo("ERROR_LEER"); :}
+    | PR_LEER error
+    {:
+        Nodo n = new Nodo("LECTURA");
+        n.agregarHijo(new Nodo("PR_LEER", "LEER"));
+        n.agregarHijo(new Nodo("ERROR_LECTURA"));
+        RESULT = n;
+    :}
 ;
 
 escritura ::= 
     PR_IMPRIMIR DEL_PAR_IZQ expresion:e DEL_PAR_DER
     {:
-        Nodo n = new Nodo("IMPRIMIR");
+        Nodo n = new Nodo("ESCRITURA");
+        n.agregarHijo(new Nodo("PR_IMPRIMIR", "IMPRIMIR"));
+        n.agregarHijo(new Nodo("DEL_PAR_IZQ", "("));
         n.agregarHijo(e);
+        n.agregarHijo(new Nodo("DEL_PAR_DER", ")"));
         RESULT = n;
     :}
-    | PR_IMPRIMIR error {: RESULT = new Nodo("ERROR_IMPRIMIR"); :}
+    | PR_IMPRIMIR error
+    {:
+        Nodo n = new Nodo("ESCRITURA");
+        n.agregarHijo(new Nodo("PR_IMPRIMIR", "IMPRIMIR"));
+        n.agregarHijo(new Nodo("ERROR_ESCRITURA"));
+        RESULT = n;
+    :}
 ;
 
 expresion ::= 
     expresion:e1 OP_SUMA expresion:e2
-    {: Nodo n = new Nodo("OP_ARITMETICO", "+"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_SUMA", "+"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_RESTA expresion:e2
-    {: Nodo n = new Nodo("OP_ARITMETICO", "-"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_RESTA", "-"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_MULT expresion:e2
-    {: Nodo n = new Nodo("OP_ARITMETICO", "*"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_MULT", "*"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_DIV expresion:e2
-    {: Nodo n = new Nodo("OP_ARITMETICO", "/"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_DIV", "/"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_IGUAL expresion:e2
-    {: Nodo n = new Nodo("OP_RELACIONAL", "=="); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_IGUAL", "=="));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_DIFERENTE expresion:e2
-    {: Nodo n = new Nodo("OP_RELACIONAL", "!="); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_DIFERENTE", "!="));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_MENOR expresion:e2
-    {: Nodo n = new Nodo("OP_RELACIONAL", "<"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_MENOR", "<"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_MENOR_IGUAL expresion:e2
-    {: Nodo n = new Nodo("OP_RELACIONAL", "<="); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_MENOR_IGUAL", "<="));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_MAYOR expresion:e2
-    {: Nodo n = new Nodo("OP_RELACIONAL", ">"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_MAYOR", ">"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_MAYOR_IGUAL expresion:e2
-    {: Nodo n = new Nodo("OP_RELACIONAL", ">="); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_MAYOR_IGUAL", ">="));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_Y expresion:e2
-    {: Nodo n = new Nodo("OP_LOGICO", "Y"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_Y", "Y"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | expresion:e1 OP_O expresion:e2
-    {: Nodo n = new Nodo("OP_LOGICO", "O"); n.agregarHijo(e1); n.agregarHijo(e2); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(e1);
+        n.agregarHijo(new Nodo("OP_O", "O"));
+        n.agregarHijo(e2);
+        RESULT = n;
+    :}
     | OP_NO expresion:e
-    {: Nodo n = new Nodo("OP_UNARIO", "NO"); n.agregarHijo(e); RESULT = n; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(new Nodo("OP_NO", "NO"));
+        n.agregarHijo(e);
+        RESULT = n;
+    :}
     | OP_RESTA expresion:e
-    {: Nodo n = new Nodo("MENOS_UNARIO", "-"); n.agregarHijo(e); RESULT = n; :} %prec MENOS_UNARIO
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(new Nodo("OP_RESTA", "-"));
+        n.agregarHijo(e);
+        RESULT = n;
+    :}
+    %prec MENOS_UNARIO
     | DEL_PAR_IZQ expresion:e DEL_PAR_DER
-    {: RESULT = e; :}
+    {:
+        Nodo n = new Nodo("EXPRESION");
+        n.agregarHijo(new Nodo("DEL_PAR_IZQ", "("));
+        n.agregarHijo(e);
+        n.agregarHijo(new Nodo("DEL_PAR_DER", ")"));
+        RESULT = n;
+    :}
     | ID:id
-    {: RESULT = new Nodo("ID", id); :}
+    {:
+        RESULT = new Nodo("ID", id);
+    :}
     | LIT_ENTERO:val
-    {: RESULT = new Nodo("ENTERO", val); :}
+    {:
+        RESULT = new Nodo("LIT_ENTERO", val);
+    :}
     | LIT_DECIMAL:val
-    {: RESULT = new Nodo("DECIMAL", val); :}
+    {:
+        RESULT = new Nodo("LIT_DECIMAL", val);
+    :}
     | LIT_CADENA:val
-    {: RESULT = new Nodo("CADENA", val); :}
+    {:
+        RESULT = new Nodo("LIT_CADENA", val);
+    :}
     | LIT_VERDADERO
-    {: RESULT = new Nodo("BOOLEANO", "VERDADERO"); :}
+    {:
+        RESULT = new Nodo("LIT_VERDADERO", "VERDADERO");
+    :}
     | LIT_FALSO
-    {: RESULT = new Nodo("BOOLEANO", "FALSO"); :}
+    {:
+        RESULT = new Nodo("LIT_FALSO", "FALSO");
+    :}
 ;

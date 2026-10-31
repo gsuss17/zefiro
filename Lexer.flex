@@ -29,13 +29,12 @@ Id                = {LetraMin}({LetraMin}|{LetraMay}|{Digito}|_)*
 Entero            = {Digito}+
 Decimal           = {Digito}+\.{Digito}+
 Cadena            = \"([^\"\\\n\r]|(\\.))*\"
-Espacio           = [ \t\r\n\f]+
+Espacio           = [ \t\r\n\f\u00A0]+
 Comentario        = \/\/[^\r\n]*
 
 /* Expresiones de Error Léxico Específico */
-/* Se excluye ';' en CadenaSinCerrar para permitir sincronización sintáctica en la misma línea */
-CadenaSinCerrar   = \"([^\"\\\r\n;]|(\\.))*
 DecimalInvalido   = {Digito}+\.
+CadenaSinCerrar   = \"([^\"\\\r\n]|(\\.))*
 IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
 
 %%
