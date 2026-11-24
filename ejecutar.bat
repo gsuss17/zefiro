@@ -2,8 +2,11 @@
 chcp 65001 >nul
 cls
 
+set "ARCHIVO=%~1"
+if "%ARCHIVO%"=="" set "ARCHIVO=becas.zefiro"
+
 echo ==========================================================================
-echo            COMPILADOR ZEFIRO - ANALIZADOR LEXICO Y SINTACTICO             
+echo            COMPILADOR E INTERPRETE ZEFIRO                                 
 echo ==========================================================================
 echo.
 echo Limpiando compilaciones anteriores...
@@ -33,9 +36,9 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-echo [4/5] Ejecutando analisis lexico y sintactico...
+echo [4/5] Ejecutando analisis lexico, sintactico, semantico e interprete...
 echo.
-java -Dfile.encoding=UTF-8 -cp ".;lib/java-cup-11b-runtime.jar" Main becas.zefiro
+java -Dfile.encoding=UTF-8 -cp ".;lib/java-cup-11b-runtime.jar" Main "%ARCHIVO%"
 echo.
 
 if exist arbol_ast.dot (

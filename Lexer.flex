@@ -19,7 +19,11 @@ import java_cup.runtime.Symbol;
   }
 
   public int erroresLexicos = 0;
+  private int comentarioLinea = 0;
+  private int comentarioColumna = 0;
 %}
+
+%state COMENTARIO_BLOQUE
 
 /* Expresiones Regulares Base */
 LetraMin          = [a-z]
@@ -29,12 +33,12 @@ Id                = {LetraMin}({LetraMin}|{LetraMay}|{Digito}|_)*
 Entero            = {Digito}+
 Decimal           = {Digito}+\.{Digito}+
 Cadena            = \"([^\"\\\n\r]|(\\.))*\"
-Espacio           = [ \t\r\n\f\u00A0]+
+Espacio           = [ \t\r\n\f\u00A0\uFEFF]+
 Comentario        = \/\/[^\r\n]*
 
 /* Expresiones de Error Léxico Específico */
 DecimalInvalido   = {Digito}+\.
-CadenaSinCerrar   = \"([^\"\\\r\n]|(\\.))*
+CadenaSinCerrar   = \"([^\"\\\r\n]|(\\.))*\\?
 IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
 
 %%
@@ -47,6 +51,7 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     "DECIMAL"         { return symbol(sym.PR_TIPO_DEC); }
     "CADENA"          { return symbol(sym.PR_TIPO_CAD); }
     "BOOLEANO"        { return symbol(sym.PR_TIPO_BOOL); }
+    "VACIO"           { return symbol(sym.PR_VACIO); }
     "VERDADERO"       { return symbol(sym.LIT_VERDADERO); }
     "FALSO"           { return symbol(sym.LIT_FALSO); }
     "SI"              { return symbol(sym.PR_SI); }
@@ -54,6 +59,13 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     "FINSI"           { return symbol(sym.PR_FINSI); }
     "MIENTRAS"        { return symbol(sym.PR_MIENTRAS); }
     "FINMIENTRAS"     { return symbol(sym.PR_FIN_MIE); }
+    "PARA"            { return symbol(sym.PR_PARA); }
+    "FINPARA"         { return symbol(sym.PR_FIN_PARA); }
+    "ROMPER"          { return symbol(sym.PR_ROMPER); }
+    "CONTINUAR"       { return symbol(sym.PR_CONTINUAR); }
+    "FUNCION"         { return symbol(sym.PR_FUNCION); }
+    "FINFUNCION"      { return symbol(sym.PR_FIN_FUNCION); }
+    "RETORNAR"        { return symbol(sym.PR_RETORNAR); }
     "LEER"            { return symbol(sym.PR_LEER); }
     "IMPRIMIR"        { return symbol(sym.PR_IMPRIMIR); }
 
@@ -67,6 +79,7 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     "-"               { return symbol(sym.OP_RESTA); }
     "*"               { return symbol(sym.OP_MULT); }
     "/"               { return symbol(sym.OP_DIV); }
+    "%"               { return symbol(sym.OP_MOD); }
 
     /* Operador de Asignación */
     "="               { return symbol(sym.OP_ASIGNA); }
@@ -94,6 +107,11 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     /* Elementos Ignorados */
     {Espacio}         { /* Ignorar */ }
     {Comentario}      { /* Ignorar */ }
+    "/*"              {
+        comentarioLinea = yyline + 1;
+        comentarioColumna = yycolumn + 1;
+        yybegin(COMENTARIO_BLOQUE);
+    }
 
     /* Errores Léxicos Específicos */
     {DecimalInvalido} {
@@ -115,5 +133,16 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     . { 
         erroresLexicos++;
         return symbol(sym.error, yytext());
+    }
+}
+
+<COMENTARIO_BLOQUE> {
+    "*/"              { yybegin(YYINITIAL); }
+    [^*]+             { /* Ignorar contenido del comentario */ }
+    "*"               { /* Ignorar asterisco suelto */ }
+    <<EOF>>           {
+        yybegin(YYINITIAL);
+        erroresLexicos++;
+        return new Symbol(sym.error, comentarioLinea, comentarioColumna, "/*");
     }
 }

@@ -8,9 +8,18 @@ import java_cup.runtime.Symbol;
 
 public class Main {
     public static void main(String[] args) {
-        String archivoFuente = (args.length > 0) ? args[0] : "becas.zefiro";
-        File archivo = new File(archivoFuente);
+        String archivoFuente = "becas.zefiro";
+        boolean soloCompilar = false;
 
+        for (String arg : args) {
+            if ("--solo-compilar".equals(arg)) {
+                soloCompilar = true;
+            } else {
+                archivoFuente = arg;
+            }
+        }
+
+        File archivo = new File(archivoFuente);
         if (!archivo.exists()) {
             System.err.println("Error: No se encontró el archivo fuente: " + archivoFuente);
             return;
@@ -29,7 +38,6 @@ public class Main {
         System.out.printf("%-8s | %-8s | %-22s | %-30s%n", "LÍNEA", "COLUMNA", "TOKEN", "LEXEMA");
         System.out.println("--------------------------------------------------------------------------");
 
-        // Lectura obligatoria en UTF-8 para evitar desalineación de caracteres en Windows
         try (InputStreamReader readerLex = new InputStreamReader(new FileInputStream(archivo), StandardCharsets.UTF_8)) {
             Lexer lexerPrueba = new Lexer(readerLex);
             Symbol s;
@@ -42,11 +50,11 @@ public class Main {
                 if (s.sym == sym.error) {
                     nombreToken = "ERROR_LEXICO";
                     String motivo = diagnosticarErrorLexico(lexema);
-                    erroresLexicosLista.add(String.format("Línea %-3d | Columna %-3d | %s: '%s'", 
+                    erroresLexicosLista.add(String.format("Línea %-3d | Columna %-3d | %s: '%s'",
                                             s.left, s.right, motivo, lexemaVisual));
                 } else {
-                    nombreToken = (s.sym >= 0 && s.sym < sym.terminalNames.length) 
-                                  ? sym.terminalNames[s.sym] 
+                    nombreToken = (s.sym >= 0 && s.sym < sym.terminalNames.length)
+                                  ? sym.terminalNames[s.sym]
                                   : ("TOKEN_" + s.sym);
                     totalTokensValidos++;
                 }
@@ -85,12 +93,12 @@ public class Main {
 
         int erroresSintacticosTotal = 0;
         Nodo arbolSintactico = null;
+        Nodo.resetearContador();
 
         try (InputStreamReader readerParser = new InputStreamReader(new FileInputStream(archivo), StandardCharsets.UTF_8)) {
             Lexer lexerSintactico = new Lexer(readerParser);
             parser p = new parser(lexerSintactico);
 
-            // Se parsea y se extrae el resultado de la producción inicial 'programa'
             Symbol resultado = p.parse();
             erroresSintacticosTotal = p.erroresSintacticos;
 
@@ -109,11 +117,36 @@ public class Main {
         }
 
         // ======================================================================
-        // FASE 3: EXPORTACIÓN DEL ÁRBOL SINTÁCTICO (AST)
+        // FASE 3: ANÁLISIS SEMÁNTICO Y TABLA DE SÍMBOLOS
+        // ======================================================================
+        int erroresSemanticosTotal = 0;
+        if (erroresLexicosTotal == 0 && erroresSintacticosTotal == 0 && arbolSintactico != null) {
+            System.out.println("\n==========================================================================");
+            System.out.println("                       FASE 3: ANÁLISIS SEMÁNTICO                          ");
+            System.out.println("==========================================================================");
+
+            AnalizadorSemantico semantico = new AnalizadorSemantico();
+            semantico.analizar(arbolSintactico);
+            erroresSemanticosTotal = semantico.errores.size();
+
+            semantico.tabla.imprimirTabla();
+            System.out.println("--------------------------------------------------------------------------");
+            if (erroresSemanticosTotal == 0) {
+                System.out.println("[ÉXITO SEMÁNTICO] Cero errores semánticos encontrados.");
+            } else {
+                System.out.println("[DETALLE DE ERRORES SEMÁNTICOS]");
+                for (String err : semantico.errores) {
+                    System.out.println(" -> " + err);
+                }
+            }
+        }
+
+        // ======================================================================
+        // FASE 4: EXPORTACIÓN DEL ÁRBOL SINTÁCTICO (AST)
         // ======================================================================
         if (erroresLexicosTotal == 0 && erroresSintacticosTotal == 0 && arbolSintactico != null) {
             System.out.println("\n==========================================================================");
-            System.out.println("                    FASE 3: ÁRBOL SINTÁCTICO (AST)                        ");
+            System.out.println("                    FASE 4: ÁRBOL SINTÁCTICO (AST)                        ");
             System.out.println("==========================================================================");
             arbolSintactico.imprimirConsola("", true);
 
@@ -134,18 +167,39 @@ public class Main {
         System.out.println("==========================================================================");
         System.out.printf("Errores Léxicos detectados    : %d%n", erroresLexicosTotal);
         System.out.printf("Errores Sintácticos detectados: %d%n", erroresSintacticosTotal);
+        System.out.printf("Errores Semánticos detectados : %d%n", erroresSemanticosTotal);
         System.out.println("--------------------------------------------------------------------------");
 
-        if (erroresLexicosTotal == 0 && erroresSintacticosTotal == 0) {
+        boolean compilacionExitosa = (erroresLexicosTotal == 0 && erroresSintacticosTotal == 0 && erroresSemanticosTotal == 0);
+        if (compilacionExitosa) {
             System.out.println("[RESULTADO FINAL: ÉXITO] El código fue aceptado completamente.");
         } else {
             System.out.println("[RESULTADO FINAL: FALLO] El código contiene errores que impiden la compilación.");
         }
         System.out.println("==========================================================================");
+
+        // ======================================================================
+        // FASE 5: EJECUCIÓN DEL PROGRAMA (INTÉRPRETE)
+        // ======================================================================
+        if (compilacionExitosa && !soloCompilar) {
+            System.out.println("\n==========================================================================");
+            System.out.println("                      FASE 5: EJECUCIÓN (INTÉRPRETE)                      ");
+            System.out.println("==========================================================================");
+            try {
+                Interprete interprete = new Interprete();
+                interprete.ejecutar(arbolSintactico);
+                System.out.println("--------------------------------------------------------------------------");
+                System.out.println("[EJECUCIÓN FINALIZADA SIN ERRORES]");
+            } catch (Interprete.ErrorEjecucion e) {
+                System.out.println(" -> Error en tiempo de ejecución: " + e.getMessage());
+            }
+        }
     }
 
     private static String diagnosticarErrorLexico(String lexema) {
-        if (lexema.startsWith("\"")) {
+        if ("/*".equals(lexema)) {
+            return "Comentario de bloque no cerrado";
+        } else if (lexema.startsWith("\"")) {
             return "Cadena de texto no cerrada";
         } else if (lexema.endsWith(".") && lexema.length() > 1) {
             return "Número decimal incompleto";

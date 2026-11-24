@@ -1,0 +1,47 @@
+INICIO ejemploCompleto;
+
+    /*
+       Programa de prueba integral para Zefiro:
+       Funciones, recursión, PARA, MIENTRAS, ROMPER, CONTINUAR,
+       módulo %, concatenación de cadenas y comentarios de bloque.
+    */
+
+    FUNCION ENTERO factorial(ENTERO n)
+        SI (n <= 1)
+            RETORNAR 1;
+        FINSI;
+        RETORNAR n * factorial(n - 1);
+    FINFUNCION;
+
+    FUNCION VACIO saludar(CADENA nombre)
+        IMPRIMIR("Hola, " + nombre + "!");
+    FINFUNCION;
+
+    saludar("Zefiro");
+
+    ENTERO f = factorial(5);
+    IMPRIMIR("Factorial de 5 = " + f);
+
+    IMPRIMIR("Números pares del 1 al 10 (saltando el 6):");
+    PARA (ENTERO i = 1; i <= 10; i = i + 1)
+        SI (i == 6)
+            CONTINUAR;
+        FINSI;
+        SI (i % 2 == 0)
+            IMPRIMIR("Par: " + i);
+        FINSI;
+    FINPARA;
+
+    ENTERO contador = 0;
+    MIENTRAS (VERDADERO)
+        contador = contador + 1;
+        SI (contador == 3)
+            ROMPER;
+        FINSI;
+    FINMIENTRAS;
+    IMPRIMIR("Contador final tras ROMPER: " + contador);
+
+    DECIMAL promedio = (90 + 95 + 100) / 3.0;
+    IMPRIMIR("Promedio decimal: " + promedio);
+
+FIN;

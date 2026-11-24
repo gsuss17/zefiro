@@ -9,20 +9,33 @@ import java.util.List;
 public class Nodo {
     public String etiqueta;
     public String valor;
+    public int linea;
+    public int columna;
     public List<Nodo> hijos;
     public int id;
     private static int contadorId = 0;
 
+    public static void resetearContador() {
+        contadorId = 0;
+    }
+
     public Nodo(String etiqueta) {
-        this.etiqueta = (etiqueta != null) ? etiqueta : "NODO";
-        this.valor = "";
-        this.hijos = new ArrayList<>();
-        this.id = ++contadorId;
+        this(etiqueta, "", 0, 0);
     }
 
     public Nodo(String etiqueta, String valor) {
+        this(etiqueta, valor, 0, 0);
+    }
+
+    public Nodo(String etiqueta, int linea, int columna) {
+        this(etiqueta, "", linea, columna);
+    }
+
+    public Nodo(String etiqueta, String valor, int linea, int columna) {
         this.etiqueta = (etiqueta != null) ? etiqueta : "NODO";
         this.valor = (valor != null) ? valor : "";
+        this.linea = linea;
+        this.columna = columna;
         this.hijos = new ArrayList<>();
         this.id = ++contadorId;
     }
