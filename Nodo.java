@@ -46,6 +46,23 @@ public class Nodo {
         }
     }
 
+    public Nodo buscarHijo(String etiqueta) {
+        for (Nodo h : hijos) {
+            if (etiqueta.equals(h.etiqueta)) return h;
+        }
+        return null;
+    }
+
+    public List<Nodo> buscarHijos(String etiqueta) {
+        List<Nodo> encontrados = new ArrayList<>();
+        for (Nodo h : hijos) {
+            if (etiqueta.equals(h.etiqueta)) {
+                encontrados.add(h);
+            }
+        }
+        return encontrados;
+    }
+
     // =========================================================================
     // 1. EXPORTACIÓN A GRAPHVIZ (.DOT) CON UTF-8 Y ORDEN ESTRICTO
     // =========================================================================

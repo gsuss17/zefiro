@@ -1,5 +1,9 @@
 import java_cup.runtime.Symbol;
 
+/**
+ * Especificación léxica para el lenguaje Zefiro (JFlex).
+ * Emite tokens compatibles con el analizador sintáctico generado por CUP.
+ */
 %%
 
 %class Lexer
@@ -10,6 +14,12 @@ import java_cup.runtime.Symbol;
 %column
 
 %{
+  public int erroresLexicos = 0;
+
+  // Posición de apertura para reportar comentarios de bloque sin cerrar en su origen
+  private int comentarioLinea = 0;
+  private int comentarioColumna = 0;
+
   private Symbol symbol(int type) {
     return new Symbol(type, yyline + 1, yycolumn + 1, yytext());
   }
@@ -18,14 +28,20 @@ import java_cup.runtime.Symbol;
     return new Symbol(type, yyline + 1, yycolumn + 1, value);
   }
 
-  public int erroresLexicos = 0;
-  private int comentarioLinea = 0;
-  private int comentarioColumna = 0;
+  private Symbol errorLexico(String lexema) {
+    erroresLexicos++;
+    return symbol(sym.error, lexema);
+  }
+
+  private Symbol errorLexico(int linea, int columna, String lexema) {
+    erroresLexicos++;
+    return new Symbol(sym.error, linea, columna, lexema);
+  }
 %}
 
 %state COMENTARIO_BLOQUE
 
-/* Expresiones Regulares Base */
+/* --- Expresiones Regulares Base --- */
 LetraMin          = [a-z]
 LetraMay          = [A-Z]
 Digito            = [0-9]
@@ -36,15 +52,15 @@ Cadena            = \"([^\"\\\n\r]|(\\.))*\"
 Espacio           = [ \t\r\n\f\u00A0\uFEFF]+
 Comentario        = \/\/[^\r\n]*
 
-/* Expresiones de Error Léxico Específico */
-DecimalInvalido   = {Digito}+\.
+/* --- Patrones de Error Léxico Específico --- */
+DecimalInvalido   = ({Digito}+\.)|(\.{Digito}+)
 CadenaSinCerrar   = \"([^\"\\\r\n]|(\\.))*\\?
 IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
 
 %%
 
 <YYINITIAL> {
-    /* Palabras Reservadas */
+    /* Palabras Reservadas (preceden a IdInvalido para reconocerse antes) */
     "INICIO"          { return symbol(sym.PR_INICIO); }
     "FIN"             { return symbol(sym.PR_FIN); }
     "ENTERO"          { return symbol(sym.PR_TIPO_ENT); }
@@ -84,7 +100,7 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     /* Operador de Asignación */
     "="               { return symbol(sym.OP_ASIGNA); }
 
-    /* Operadores Relacionales */
+    /* Operadores Relacionales (compuestos antes que simples) */
     "=="              { return symbol(sym.OP_IGUAL); }
     "!="              { return symbol(sym.OP_DIFERENTE); }
     "<="              { return symbol(sym.OP_MENOR_IGUAL); }
@@ -104,36 +120,20 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     {Cadena}          { return symbol(sym.LIT_CADENA, yytext()); }
     {Id}              { return symbol(sym.ID, yytext()); }
 
-    /* Elementos Ignorados */
+    /* Espacios y Comentarios */
     {Espacio}         { /* Ignorar */ }
-    {Comentario}      { /* Ignorar */ }
+    {Comentario}      { /* Ignorar comentario de línea */ }
     "/*"              {
         comentarioLinea = yyline + 1;
         comentarioColumna = yycolumn + 1;
         yybegin(COMENTARIO_BLOQUE);
     }
 
-    /* Errores Léxicos Específicos */
-    {DecimalInvalido} {
-        erroresLexicos++;
-        return symbol(sym.error, yytext());
-    }
-
-    {CadenaSinCerrar} {
-        erroresLexicos++;
-        return symbol(sym.error, yytext());
-    }
-
-    {IdInvalido} {
-        erroresLexicos++;
-        return symbol(sym.error, yytext());
-    }
-
-    /* Error Léxico General */
-    . { 
-        erroresLexicos++;
-        return symbol(sym.error, yytext());
-    }
+    /* Recuperación de Errores Léxicos */
+    {DecimalInvalido} { return errorLexico(yytext()); }
+    {CadenaSinCerrar} { return errorLexico(yytext()); }
+    {IdInvalido}      { return errorLexico(yytext()); }
+    .                 { return errorLexico(yytext()); }
 }
 
 <COMENTARIO_BLOQUE> {
@@ -142,7 +142,6 @@ IdInvalido        = {LetraMay}[a-zA-Z0-9_]*
     "*"               { /* Ignorar asterisco suelto */ }
     <<EOF>>           {
         yybegin(YYINITIAL);
-        erroresLexicos++;
-        return new Symbol(sym.error, comentarioLinea, comentarioColumna, "/*");
+        return errorLexico(comentarioLinea, comentarioColumna, "/*");
     }
 }

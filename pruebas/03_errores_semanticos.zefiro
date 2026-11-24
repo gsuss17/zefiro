@@ -1,55 +1,62 @@
 INICIO pruebaSemantica;
 
+    // 1. Retorno incompatible, retorno en VACIO y retorno faltante en todos los caminos
     FUNCION ENTERO sumar(ENTERO x, ENTERO y)
-        RETORNAR x + y;
+        RETORNAR "no es entero";
     FINFUNCION;
 
-    //FUNCION VACIO avisar()
-    //    RETORNAR 42;
-    //FINFUNCION;
+    FUNCION VACIO avisar()
+        RETORNAR 42;
+    FINFUNCION;
 
-    // 1. Redeclaración en el mismo ámbito
-    //ENTERO a = 5;
-    //ENTERO a = 10;
+    FUNCION ENTERO sinRetorno(ENTERO n)
+        SI (n > 0)
+            RETORNAR n;
+        FINSI;
+    FINFUNCION;
 
-    // 2. Incompatibilidad de tipos en inicialización y asignación
-    //ENTERO mal_ent = "texto";
-    //BOOLEANO mal_bool = 123;
-    //a = VERDADERO;
-
-    // 3. Variable no declarada
-    //no_declarada = 99;
-    //IMPRIMIR(otra_inexistente);
-
-    // 4. Operaciones con tipos inválidos
-    //DECIMAL mod_mal = 5 % 2.2;
-    //ENTERO resta_mal = "hola" - 5;
-    //BOOLEANO neg_mal = NO 10;
-
-    // 5. Condiciones no booleanas
-    /*
+    // 2. Redeclaración en el mismo ámbito y sombreado en bloque hijo (estilo Java)
+    ENTERO a = 5;
     ENTERO a = 10;
-    ENTERO b;
-    SI (a > 5)
-        ENTERO a2 = 1;
-        ENTERO b2 = a + a;
-        IMPRIMIR(b2);
+    SI (a > 0)
+        ENTERO a = 1;
     FINSI;
-    */
 
-    //MIENTRAS ("verdad")
-    //    IMPRIMIR("Ciclo inválido");
-    //FINMIENTRAS;
+    // 3. Uso de variable declarada sin inicializar
+    ENTERO sin_init;
+    IMPRIMIR(sin_init);
 
-    // 6. ROMPER, CONTINUAR y RETORNAR fuera de contexto
-    //ROMPER;
-    //CONTINUAR;
-    //RETORNAR 1;
+    // 4. Incompatibilidad de tipos en inicialización y asignación
+    ENTERO mal_ent = "texto";
+    BOOLEANO mal_bool = 123;
+    a = VERDADERO;
 
-    // 7. Llamadas a funciones con errores
-    //ENTERO r1 = funcionInexistente(1, 2);
-    ENTERO r2 = sumar(1,2);
+    // 5. Variable no declarada
+    no_declarada = 99;
+    IMPRIMIR(otra_inexistente);
+
+    // 6. Operaciones con tipos inválidos
+    ENTERO mod_mal = "texto" % 2;
+    ENTERO resta_mal = "hola" - 5;
+    BOOLEANO neg_mal = NO 10;
+
+    // 7. Condiciones no booleanas
+    SI (a + 5)
+        IMPRIMIR("Condición inválida");
+    FINSI;
+
+    MIENTRAS ("verdad")
+        IMPRIMIR("Ciclo inválido");
+    FINMIENTRAS;
+
+    // 8. ROMPER, CONTINUAR y RETORNAR fuera de contexto
+    ROMPER;
+    CONTINUAR;
+    RETORNAR 1;
+
+    // 9. Llamadas a funciones con errores
+    ENTERO r1 = funcionInexistente(1, 2);
+    ENTERO r2 = sumar(1);
     ENTERO r3 = sumar(1, "dos");
-    //IMPRIMIR(r3);
 
 FIN;

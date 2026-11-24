@@ -5,6 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Tabla de Símbolos con pila de ámbitos anidados y registro histórico
+ * para su impresión al finalizar el análisis semántico.
+ */
 public class TablaSimbolos {
     private final Deque<Map<String, Simbolo>> ambitos = new ArrayDeque<>();
     private final Deque<String> nombresAmbitos = new ArrayDeque<>();
@@ -30,12 +34,16 @@ public class TablaSimbolos {
         return nombresAmbitos.peek();
     }
 
+    /**
+     * Registra un símbolo en el ámbito actual.
+     * Siguiendo las reglas de Java, impide redeclarar variables o parámetros
+     * que ya existan en ámbitos contenedores visibles.
+     */
     public boolean declarar(Simbolo simbolo) {
         Map<String, Simbolo> actual = ambitos.peek();
         if (actual == null || actual.containsKey(simbolo.nombre)) {
             return false;
         }
-        // Estilo Java: no permitir sombrear variables/parámetros de ámbitos contenedores
         if (!"FUNCION".equals(simbolo.categoria)) {
             Simbolo existente = buscar(simbolo.nombre);
             if (existente != null && !"FUNCION".equals(existente.categoria)) {
@@ -65,10 +73,9 @@ public class TablaSimbolos {
                           "IDENTIFICADOR", "TIPO", "CATEGORÍA", "ÁMBITO", "LÍNEA");
         System.out.println("--------------------------------------------------------------------------");
         for (Simbolo s : historial) {
-            String tipoMostrar = s.tipo;
-            if ("FUNCION".equals(s.categoria)) {
-                tipoMostrar = s.tipo + "(" + String.join(", ", s.parametrosTipos) + ")";
-            }
+            String tipoMostrar = "FUNCION".equals(s.categoria)
+                                 ? s.tipo + "(" + String.join(", ", s.parametrosTipos) + ")"
+                                 : s.tipo;
             System.out.printf("%-20s | %-10s | %-12s | %-15s | %-6d%n",
                               s.nombre, tipoMostrar, s.categoria, s.ambito, s.linea);
         }

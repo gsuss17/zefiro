@@ -201,7 +201,7 @@ public class Main {
             return "Comentario de bloque no cerrado";
         } else if (lexema.startsWith("\"")) {
             return "Cadena de texto no cerrada";
-        } else if (lexema.endsWith(".") && lexema.length() > 1) {
+        } else if ((lexema.startsWith(".") || lexema.endsWith(".")) && lexema.length() > 1) {
             return "Número decimal incompleto";
         } else if (lexema.length() >= 1 && Character.isUpperCase(lexema.charAt(0))) {
             return "Identificador o palabra no permitida (inicia en mayúscula)";

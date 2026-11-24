@@ -1,6 +1,11 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Analizador semántico para Zefiro.
+ * Valida ámbitos, declaraciones, inicialización, compatibilidad de tipos,
+ * control de flujo (ROMPER/CONTINUAR) y retornos de funciones estilo Java.
+ */
 public class AnalizadorSemantico {
     public final TablaSimbolos tabla = new TablaSimbolos();
     public final List<String> errores = new ArrayList<>();
@@ -12,7 +17,8 @@ public class AnalizadorSemantico {
     public void analizar(Nodo raiz) {
         if (raiz == null) return;
 
-        Nodo listaFunciones = buscarHijo(raiz, "LISTA_FUNCIONES");
+        // Paso 1: registrar firmas de funciones para permitir llamadas en cualquier orden y recursión
+        Nodo listaFunciones = raiz.buscarHijo("LISTA_FUNCIONES");
         if (listaFunciones != null) {
             for (Nodo fn : listaFunciones.hijos) {
                 if ("FUNCION".equals(fn.etiqueta)) {
@@ -26,70 +32,66 @@ public class AnalizadorSemantico {
             }
         }
 
-        Nodo listaSentencias = buscarHijo(raiz, "LISTA_SENTENCIAS");
+        // Paso 2: analizar el cuerpo principal del programa
+        Nodo listaSentencias = raiz.buscarHijo("LISTA_SENTENCIAS");
         if (listaSentencias != null) {
             analizarListaSentencias(listaSentencias);
         }
     }
 
     private void registrarFirmaFuncion(Nodo fn) {
-        if (buscarHijo(fn, "ERROR_FUNCION") != null) return;
+        if (fn.buscarHijo("ERROR_FUNCION") != null) return;
 
-        Nodo nodoTipo = buscarHijo(fn, "TIPO");
-        Nodo nodoId = buscarHijo(fn, "ID");
+        Nodo nodoTipo = fn.buscarHijo("TIPO");
+        Nodo nodoId = fn.buscarHijo("ID");
         if (nodoTipo == null || nodoId == null) return;
 
-        String tipoRet = extraerTipo(nodoTipo);
-        String nombre = nodoId.valor;
-        Simbolo symFn = new Simbolo(nombre, tipoRet, "FUNCION", "global", nodoId.linea, true);
+        Simbolo symFn = new Simbolo(nodoId.valor, extraerTipo(nodoTipo), "FUNCION",
+                                    "global", nodoId.linea, true);
 
-        Nodo listaParams = buscarHijo(fn, "LISTA_PARAMETROS");
+        Nodo listaParams = fn.buscarHijo("LISTA_PARAMETROS");
         if (listaParams != null) {
-            for (Nodo hijo : listaParams.hijos) {
-                if ("PARAMETRO".equals(hijo.etiqueta)) {
-                    Nodo pTipo = buscarHijo(hijo, "TIPO");
-                    if (pTipo != null) {
-                        symFn.parametrosTipos.add(extraerTipo(pTipo));
-                    }
+            for (Nodo param : listaParams.buscarHijos("PARAMETRO")) {
+                Nodo pTipo = param.buscarHijo("TIPO");
+                if (pTipo != null) {
+                    symFn.parametrosTipos.add(extraerTipo(pTipo));
                 }
             }
         }
 
         if (!tabla.declarar(symFn)) {
-            agregarError(nodoId.linea, nodoId.columna, "La función '" + nombre + "' ya fue declarada.");
+            agregarError(nodoId.linea, nodoId.columna, "La función '" + nodoId.valor + "' ya fue declarada.");
         }
     }
 
     private void analizarFuncion(Nodo fn) {
-        if (buscarHijo(fn, "ERROR_FUNCION") != null) return;
+        if (fn.buscarHijo("ERROR_FUNCION") != null) return;
 
-        Nodo nodoTipo = buscarHijo(fn, "TIPO");
-        Nodo nodoId = buscarHijo(fn, "ID");
+        Nodo nodoTipo = fn.buscarHijo("TIPO");
+        Nodo nodoId = fn.buscarHijo("ID");
         if (nodoTipo == null || nodoId == null) return;
 
         String tipoAnterior = tipoRetornoActual;
         tipoRetornoActual = extraerTipo(nodoTipo);
         tabla.entrarAmbito("fn_" + nodoId.valor);
 
-        Nodo listaParams = buscarHijo(fn, "LISTA_PARAMETROS");
+        Nodo listaParams = fn.buscarHijo("LISTA_PARAMETROS");
         if (listaParams != null) {
-            for (Nodo hijo : listaParams.hijos) {
-                if ("PARAMETRO".equals(hijo.etiqueta)) {
-                    Nodo pTipo = buscarHijo(hijo, "TIPO");
-                    Nodo pId = buscarHijo(hijo, "ID");
-                    if (pTipo != null && pId != null) {
-                        Simbolo param = new Simbolo(pId.valor, extraerTipo(pTipo), "PARAMETRO",
-                                                    tabla.ambitoActual(), pId.linea, true);
-                        if (!tabla.declarar(param)) {
-                            agregarError(pId.linea, pId.columna,
-                                         "Parámetro duplicado '" + pId.valor + "' en función '" + nodoId.valor + "'.");
-                        }
+            for (Nodo param : listaParams.buscarHijos("PARAMETRO")) {
+                Nodo pTipo = param.buscarHijo("TIPO");
+                Nodo pId = param.buscarHijo("ID");
+                if (pTipo != null && pId != null) {
+                    Simbolo symParam = new Simbolo(pId.valor, extraerTipo(pTipo), "PARAMETRO",
+                                                   tabla.ambitoActual(), pId.linea, true);
+                    if (!tabla.declarar(symParam)) {
+                        agregarError(pId.linea, pId.columna,
+                                     "Parámetro duplicado '" + pId.valor + "' en función '" + nodoId.valor + "'.");
                     }
                 }
             }
         }
 
-        Nodo cuerpo = buscarHijo(fn, "LISTA_SENTENCIAS");
+        Nodo cuerpo = fn.buscarHijo("LISTA_SENTENCIAS");
         if (cuerpo != null) {
             analizarListaSentencias(cuerpo);
         }
@@ -106,10 +108,8 @@ public class AnalizadorSemantico {
 
     private void analizarListaSentencias(Nodo lista) {
         if (lista == null) return;
-        for (Nodo s : lista.hijos) {
-            if ("SENTENCIA".equals(s.etiqueta)) {
-                analizarSentencia(s);
-            }
+        for (Nodo s : lista.buscarHijos("SENTENCIA")) {
+            analizarSentencia(s);
         }
     }
 
@@ -118,43 +118,20 @@ public class AnalizadorSemantico {
         Nodo principal = s.hijos.get(0);
 
         switch (principal.etiqueta) {
-            case "DECLARACION":
-                analizarDeclaracion(principal);
-                break;
-            case "ASIGNACION":
-                analizarAsignacion(principal);
-                break;
-            case "CONDICIONAL":
-                analizarCondicional(principal);
-                break;
-            case "CICLO":
-                analizarCicloMientras(principal);
-                break;
-            case "CICLO_PARA":
-                analizarCicloPara(principal);
-                break;
-            case "LECTURA":
-                analizarLectura(principal);
-                break;
-            case "ESCRITURA":
-                analizarEscritura(principal);
-                break;
-            case "LLAMADA_FUNCION":
-                analizarLlamadaFuncion(principal);
-                break;
-            case "RETORNAR":
-                analizarRetornar(principal);
-                break;
+            case "DECLARACION":     analizarDeclaracion(principal); break;
+            case "ASIGNACION":      analizarAsignacion(principal); break;
+            case "CONDICIONAL":     analizarCondicional(principal); break;
+            case "CICLO":           analizarCicloMientras(principal); break;
+            case "CICLO_PARA":      analizarCicloPara(principal); break;
+            case "LECTURA":         analizarLectura(principal); break;
+            case "ESCRITURA":       analizarEscritura(principal); break;
+            case "LLAMADA_FUNCION": analizarLlamadaFuncion(principal); break;
+            case "RETORNAR":        analizarRetornar(principal); break;
             case "ROMPER":
-                if (profundidadCiclo == 0) {
-                    agregarError(principal.linea, principal.columna,
-                                 "'ROMPER' solo puede usarse dentro de un ciclo (MIENTRAS o PARA).");
-                }
-                break;
             case "CONTINUAR":
                 if (profundidadCiclo == 0) {
                     agregarError(principal.linea, principal.columna,
-                                 "'CONTINUAR' solo puede usarse dentro de un ciclo (MIENTRAS o PARA).");
+                                 "'" + principal.etiqueta + "' solo puede usarse dentro de un ciclo (MIENTRAS o PARA).");
                 }
                 break;
             default:
@@ -163,33 +140,30 @@ public class AnalizadorSemantico {
     }
 
     private void analizarDeclaracion(Nodo decl) {
-        Nodo nodoTipo = buscarHijo(decl, "TIPO");
-        Nodo listaVars = buscarHijo(decl, "LISTA_VARS");
+        Nodo nodoTipo = decl.buscarHijo("TIPO");
+        Nodo listaVars = decl.buscarHijo("LISTA_VARS");
         if (nodoTipo == null || listaVars == null) return;
 
         String tipo = extraerTipo(nodoTipo);
-        for (Nodo hijo : listaVars.hijos) {
-            if ("VAR_ITEM".equals(hijo.etiqueta)) {
-                Nodo nodoId = buscarHijo(hijo, "ID");
-                if (nodoId == null) continue;
+        for (Nodo item : listaVars.buscarHijos("VAR_ITEM")) {
+            Nodo nodoId = item.buscarHijo("ID");
+            if (nodoId == null) continue;
 
-                boolean tieneInit = hijo.hijos.size() >= 3;
-                if (tieneInit) {
-                    Nodo expr = hijo.hijos.get(2);
-                    String tipoExpr = inferirTipoExpresion(expr);
-                    if (!"ERROR".equals(tipoExpr) && !esCompatible(tipo, tipoExpr)) {
-                        agregarError(nodoId.linea, nodoId.columna,
-                                     "Tipo incompatible al inicializar '" + nodoId.valor + "': se esperaba " +
-                                     tipo + " y se recibió " + tipoExpr + ".");
-                    }
-                }
-
-                Simbolo sym = new Simbolo(nodoId.valor, tipo, "VARIABLE",
-                                          tabla.ambitoActual(), nodoId.linea, tieneInit);
-                if (!tabla.declarar(sym)) {
+            boolean tieneInit = item.hijos.size() >= 3;
+            if (tieneInit) {
+                String tipoExpr = inferirTipoExpresion(item.hijos.get(2));
+                if (!"ERROR".equals(tipoExpr) && !esCompatible(tipo, tipoExpr)) {
                     agregarError(nodoId.linea, nodoId.columna,
-                                 "La variable '" + nodoId.valor + "' ya fue declarada en este ámbito.");
+                                 "Tipo incompatible al inicializar '" + nodoId.valor + "': se esperaba " +
+                                 tipo + " y se recibió " + tipoExpr + ".");
                 }
+            }
+
+            Simbolo sym = new Simbolo(nodoId.valor, tipo, "VARIABLE",
+                                      tabla.ambitoActual(), nodoId.linea, tieneInit);
+            if (!tabla.declarar(sym)) {
+                agregarError(nodoId.linea, nodoId.columna,
+                             "La variable '" + nodoId.valor + "' ya fue declarada en este ámbito.");
             }
         }
     }
@@ -201,8 +175,7 @@ public class AnalizadorSemantico {
 
         Simbolo sym = tabla.buscar(nodoId.valor);
         if (sym == null) {
-            agregarError(nodoId.linea, nodoId.columna,
-                         "Variable '" + nodoId.valor + "' no declarada.");
+            agregarError(nodoId.linea, nodoId.columna, "Variable '" + nodoId.valor + "' no declarada.");
             inferirTipoExpresion(expr);
             return;
         }
@@ -222,23 +195,10 @@ public class AnalizadorSemantico {
     }
 
     private void analizarCondicional(Nodo condNode) {
-        if (buscarHijo(condNode, "ERROR_CONDICIONAL") != null) return;
-        // Hijos: PR_SI, (, cond, ), ls1, [SINO, ls2], FINSI, ;
-        Nodo exprCond = condNode.hijos.get(2);
-        String tipoCond = inferirTipoExpresion(exprCond);
-        if (!"ERROR".equals(tipoCond) && !"BOOLEANO".equals(tipoCond)) {
-            agregarError(exprCond.linea, exprCond.columna,
-                         "La condición de 'SI' debe ser BOOLEANO, se recibió " + tipoCond + ".");
-        }
+        if (condNode.buscarHijo("ERROR_CONDICIONAL") != null) return;
+        validarCondicionBooleana(condNode.hijos.get(2), "SI");
 
-        List<Nodo> bloques = new ArrayList<>();
-        for (Nodo h : condNode.hijos) {
-            if ("LISTA_SENTENCIAS".equals(h.etiqueta)) {
-                bloques.add(h);
-            }
-        }
-
-        for (Nodo bloque : bloques) {
+        for (Nodo bloque : condNode.buscarHijos("LISTA_SENTENCIAS")) {
             tabla.entrarAmbito("si_" + (++contadorBloques));
             analizarListaSentencias(bloque);
             tabla.salirAmbito();
@@ -246,25 +206,18 @@ public class AnalizadorSemantico {
     }
 
     private void analizarCicloMientras(Nodo ciclo) {
-        if (buscarHijo(ciclo, "ERROR_CICLO") != null) return;
-        Nodo exprCond = ciclo.hijos.get(2);
-        String tipoCond = inferirTipoExpresion(exprCond);
-        if (!"ERROR".equals(tipoCond) && !"BOOLEANO".equals(tipoCond)) {
-            agregarError(exprCond.linea, exprCond.columna,
-                         "La condición de 'MIENTRAS' debe ser BOOLEANO, se recibió " + tipoCond + ".");
-        }
+        if (ciclo.buscarHijo("ERROR_CICLO") != null) return;
+        validarCondicionBooleana(ciclo.hijos.get(2), "MIENTRAS");
 
-        Nodo cuerpo = buscarHijo(ciclo, "LISTA_SENTENCIAS");
         tabla.entrarAmbito("mientras_" + (++contadorBloques));
         profundidadCiclo++;
-        analizarListaSentencias(cuerpo);
+        analizarListaSentencias(ciclo.buscarHijo("LISTA_SENTENCIAS"));
         profundidadCiclo--;
         tabla.salirAmbito();
     }
 
     private void analizarCicloPara(Nodo para) {
-        if (buscarHijo(para, "ERROR_CICLO_PARA") != null) return;
-        // Hijos: PARA, (, init, ;, cond, ;, paso, ), ls, FINPARA, ;
+        if (para.buscarHijo("ERROR_CICLO_PARA") != null) return;
         tabla.entrarAmbito("para_" + (++contadorBloques));
 
         Nodo init = para.hijos.get(2);
@@ -274,26 +227,18 @@ public class AnalizadorSemantico {
             analizarAsignacion(init);
         }
 
-        Nodo cond = para.hijos.get(4);
-        String tipoCond = inferirTipoExpresion(cond);
-        if (!"ERROR".equals(tipoCond) && !"BOOLEANO".equals(tipoCond)) {
-            agregarError(cond.linea, cond.columna,
-                         "La condición de 'PARA' debe ser BOOLEANO, se recibió " + tipoCond + ".");
-        }
+        validarCondicionBooleana(para.hijos.get(4), "PARA");
+        analizarAsignacion(para.hijos.get(6));
 
-        Nodo paso = para.hijos.get(6);
-        analizarAsignacion(paso);
-
-        Nodo cuerpo = buscarHijo(para, "LISTA_SENTENCIAS");
         profundidadCiclo++;
-        analizarListaSentencias(cuerpo);
+        analizarListaSentencias(para.buscarHijo("LISTA_SENTENCIAS"));
         profundidadCiclo--;
 
         tabla.salirAmbito();
     }
 
     private void analizarLectura(Nodo lect) {
-        Nodo nodoId = buscarHijo(lect, "ID");
+        Nodo nodoId = lect.buscarHijo("ID");
         if (nodoId == null) return;
 
         Simbolo sym = tabla.buscar(nodoId.valor);
@@ -311,8 +256,7 @@ public class AnalizadorSemantico {
     private void analizarEscritura(Nodo esc) {
         if (esc.hijos.size() < 3) return;
         Nodo expr = esc.hijos.get(2);
-        String tipo = inferirTipoExpresion(expr);
-        if ("VACIO".equals(tipo)) {
+        if ("VACIO".equals(inferirTipoExpresion(expr))) {
             agregarError(expr.linea, expr.columna,
                          "No se puede imprimir una expresión de tipo VACIO.");
         }
@@ -320,8 +264,7 @@ public class AnalizadorSemantico {
 
     private void analizarRetornar(Nodo ret) {
         if (tipoRetornoActual == null) {
-            agregarError(ret.linea, ret.columna,
-                         "'RETORNAR' solo puede usarse dentro de una función.");
+            agregarError(ret.linea, ret.columna, "'RETORNAR' solo puede usarse dentro de una función.");
             return;
         }
 
@@ -330,33 +273,32 @@ public class AnalizadorSemantico {
                 agregarError(ret.linea, ret.columna,
                              "La función debe retornar un valor de tipo " + tipoRetornoActual + ".");
             }
-        } else {
-            Nodo expr = ret.hijos.get(1);
-            String tipoExpr = inferirTipoExpresion(expr);
-            if ("VACIO".equals(tipoRetornoActual)) {
-                agregarError(ret.linea, ret.columna,
-                             "Una función VACIO no debe retornar un valor.");
-            } else if (!"ERROR".equals(tipoExpr) && !esCompatible(tipoRetornoActual, tipoExpr)) {
-                agregarError(expr.linea, expr.columna,
-                             "Tipo de retorno incompatible: se esperaba " + tipoRetornoActual +
-                             " y se recibió " + tipoExpr + ".");
-            }
+            return;
+        }
+
+        Nodo expr = ret.hijos.get(1);
+        String tipoExpr = inferirTipoExpresion(expr);
+        if ("VACIO".equals(tipoRetornoActual)) {
+            agregarError(ret.linea, ret.columna, "Una función VACIO no debe retornar un valor.");
+        } else if (!"ERROR".equals(tipoExpr) && !esCompatible(tipoRetornoActual, tipoExpr)) {
+            agregarError(expr.linea, expr.columna,
+                         "Tipo de retorno incompatible: se esperaba " + tipoRetornoActual +
+                         " y se recibió " + tipoExpr + ".");
         }
     }
 
     private String analizarLlamadaFuncion(Nodo llamada) {
-        Nodo nodoId = buscarHijo(llamada, "ID");
+        Nodo nodoId = llamada.buscarHijo("ID");
         if (nodoId == null) return "ERROR";
 
         Simbolo sym = tabla.buscar(nodoId.valor);
         if (sym == null || !"FUNCION".equals(sym.categoria)) {
-            agregarError(nodoId.linea, nodoId.columna,
-                         "Función '" + nodoId.valor + "' no declarada.");
+            agregarError(nodoId.linea, nodoId.columna, "Función '" + nodoId.valor + "' no declarada.");
             return "ERROR";
         }
 
         List<Nodo> args = new ArrayList<>();
-        Nodo listaArgs = buscarHijo(llamada, "LISTA_ARGUMENTOS");
+        Nodo listaArgs = llamada.buscarHijo("LISTA_ARGUMENTOS");
         if (listaArgs != null) {
             for (Nodo h : listaArgs.hijos) {
                 if (!"DEL_COMA".equals(h.etiqueta)) {
@@ -388,11 +330,13 @@ public class AnalizadorSemantico {
         if (expr == null) return "ERROR";
 
         switch (expr.etiqueta) {
-            case "LIT_ENTERO": return "ENTERO";
-            case "LIT_DECIMAL": return "DECIMAL";
-            case "LIT_CADENA": return "CADENA";
+            case "LIT_ENTERO":    return "ENTERO";
+            case "LIT_DECIMAL":   return "DECIMAL";
+            case "LIT_CADENA":    return "CADENA";
             case "LIT_VERDADERO":
-            case "LIT_FALSO": return "BOOLEANO";
+            case "LIT_FALSO":     return "BOOLEANO";
+            case "LLAMADA_FUNCION":
+                return analizarLlamadaFuncion(expr);
             case "ID": {
                 Simbolo sym = tabla.buscar(expr.valor);
                 if (sym == null) {
@@ -410,20 +354,16 @@ public class AnalizadorSemantico {
                 }
                 return sym.tipo;
             }
-            case "LLAMADA_FUNCION":
-                return analizarLlamadaFuncion(expr);
             case "EXPRESION":
                 break;
             default:
                 return "ERROR";
         }
 
-        // Paréntesis: (, expr, )
         if (expr.hijos.size() == 3 && "DEL_PAR_IZQ".equals(expr.hijos.get(0).etiqueta)) {
             return inferirTipoExpresion(expr.hijos.get(1));
         }
 
-        // Unarios: OP_NO expr | OP_RESTA expr
         if (expr.hijos.size() == 2) {
             String op = expr.hijos.get(0).etiqueta;
             String t = inferirTipoExpresion(expr.hijos.get(1));
@@ -436,7 +376,8 @@ public class AnalizadorSemantico {
                     return "ERROR";
                 }
                 return "BOOLEANO";
-            } else if ("OP_RESTA".equals(op)) {
+            }
+            if ("OP_RESTA".equals(op)) {
                 if (!esNumerico(t)) {
                     agregarError(expr.linea, expr.columna,
                                  "El operador '-' unario requiere un operando numérico, se recibió " + t + ".");
@@ -446,7 +387,6 @@ public class AnalizadorSemantico {
             }
         }
 
-        // Binarios: e1 op e2
         if (expr.hijos.size() == 3) {
             String t1 = inferirTipoExpresion(expr.hijos.get(0));
             String op = expr.hijos.get(1).etiqueta;
@@ -462,13 +402,7 @@ public class AnalizadorSemantico {
                         }
                         return "CADENA";
                     }
-                    if (esNumerico(t1) && esNumerico(t2)) {
-                        return ("DECIMAL".equals(t1) || "DECIMAL".equals(t2)) ? "DECIMAL" : "ENTERO";
-                    }
-                    agregarError(expr.linea, expr.columna,
-                                 "Operación '+' inválida entre " + t1 + " y " + t2 + ".");
-                    return "ERROR";
-
+                    // Si no hay cadenas, '+' sigue las mismas reglas aritméticas que -, *, /, %
                 case "OP_RESTA":
                 case "OP_MULT":
                 case "OP_DIV":
@@ -513,21 +447,24 @@ public class AnalizadorSemantico {
         return "ERROR";
     }
 
+    private void validarCondicionBooleana(Nodo exprCond, String estructura) {
+        String tipoCond = inferirTipoExpresion(exprCond);
+        if (!"ERROR".equals(tipoCond) && !"BOOLEANO".equals(tipoCond)) {
+            agregarError(exprCond.linea, exprCond.columna,
+                         "La condición de '" + estructura + "' debe ser BOOLEANO, se recibió " + tipoCond + ".");
+        }
+    }
+
     private boolean garantizaRetorno(Nodo lista) {
         if (lista == null) return false;
-        for (Nodo s : lista.hijos) {
-            if (!"SENTENCIA".equals(s.etiqueta) || s.hijos.isEmpty()) continue;
+        for (Nodo s : lista.buscarHijos("SENTENCIA")) {
+            if (s.hijos.isEmpty()) continue;
             Nodo p = s.hijos.get(0);
             if ("RETORNAR".equals(p.etiqueta)) {
                 return true;
             }
             if ("CONDICIONAL".equals(p.etiqueta)) {
-                List<Nodo> bloques = new ArrayList<>();
-                for (Nodo h : p.hijos) {
-                    if ("LISTA_SENTENCIAS".equals(h.etiqueta)) {
-                        bloques.add(h);
-                    }
-                }
+                List<Nodo> bloques = p.buscarHijos("LISTA_SENTENCIAS");
                 if (bloques.size() == 2 && garantizaRetorno(bloques.get(0)) && garantizaRetorno(bloques.get(1))) {
                     return true;
                 }
@@ -548,14 +485,6 @@ public class AnalizadorSemantico {
     private String extraerTipo(Nodo nodoTipo) {
         if (nodoTipo == null || nodoTipo.hijos.isEmpty()) return "ERROR";
         return nodoTipo.hijos.get(0).valor;
-    }
-
-    private Nodo buscarHijo(Nodo padre, String etiqueta) {
-        if (padre == null) return null;
-        for (Nodo h : padre.hijos) {
-            if (etiqueta.equals(h.etiqueta)) return h;
-        }
-        return null;
     }
 
     private void agregarError(int linea, int columna, String mensaje) {

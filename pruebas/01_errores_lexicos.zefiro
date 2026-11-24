@@ -1,21 +1,20 @@
 INICIO pruebaLexica;
 
     // 1. Identificadores inválidos (inician con mayúscula)
-    // ENTERO Edad = 20;
-    //CADENA NombreUsuario = "Ana";
+    ENTERO Edad = 20;
+    CADENA NombreUsuario = "Ana";
 
-    // 2. Números decimales incompletos
-    // DECIMAL pi = 3.;
-    // DECIMAL otro = 10.;
+    // 2. Números decimales incompletos (al final o al inicio)
+    DECIMAL pi = 3.;
+    DECIMAL medio = .5;
 
-    // 3. Símbolos / caracteres no válidos
-    // ENTERO costo = 100 @ 2;
-    // ENTERO moneda = $50;
+    // 3. Símbolos o caracteres no válidos
+    ENTERO costo = 100 @ 2;
+    ENTERO moneda = $50;
 
     // 4. Cadena de texto sin cerrar
-    // CADENA mensaje = "Esta cadena nunca se cierra
+    CADENA mensaje = "Esta cadena nunca se cierra
 
     // 5. Comentario de bloque sin cerrar al final del archivo
-    // /* Este comentario de bloque queda abierto...
-
+    /* Este comentario de bloque queda abierto...
 FIN;

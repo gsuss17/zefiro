@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Representa una entrada en la Tabla de Símbolos (variable, parámetro o función).
+ */
 public class Simbolo {
     public String nombre;
     public String tipo;
