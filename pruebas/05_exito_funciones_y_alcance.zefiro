@@ -1,0 +1,49 @@
+INICIO pruebaFuncionesYAlcance;
+
+    FUNCION ENTERO fibonacci(ENTERO n)
+        SI (n <= 1)
+            RETORNAR n;
+        FINSI;
+        RETORNAR fibonacci(n - 1) + fibonacci(n - 2);
+    FINFUNCION;
+
+    FUNCION DECIMAL calcularDescuento(DECIMAL precio, ENTERO porcentaje, BOOLEANO esVip)
+        SI (esVip Y porcentaje < 20)
+            porcentaje = 20;
+        FINSI;
+        DECIMAL factor = (100 - porcentaje) / 100.0;
+        RETORNAR precio * factor;
+    FINFUNCION;
+
+    FUNCION VACIO mostrarSiPositivo(ENTERO valor)
+        SI (valor <= 0)
+            IMPRIMIR("Valor no positivo, saliendo temprano.");
+            RETORNAR;
+        FINSI;
+        IMPRIMIR("Valor positivo recibido: " + valor);
+    FINFUNCION;
+
+    // Prueba de recursión
+    IMPRIMIR("Fibonacci(7) = " + fibonacci(7));
+
+    // Prueba de múltiples tipos y promoción ENTERO -> DECIMAL
+    DECIMAL total = calcularDescuento(500, 10, VERDADERO);
+    IMPRIMIR("Precio final VIP: " + total);
+
+    // Prueba de retorno temprano en función VACIO
+    mostrarSiPositivo(-3);
+    mostrarSiPositivo(15);
+
+    // Prueba de ámbitos independientes entre bloques hermanos y funciones
+    ENTERO x = 100;
+    SI (VERDADERO)
+        ENTERO local_si = 200;
+        IMPRIMIR("local_si dentro de SI = " + local_si);
+    FINSI;
+    SI (VERDADERO)
+        ENTERO local_si = 300;
+        IMPRIMIR("local_si en segundo SI = " + local_si);
+    FINSI;
+    IMPRIMIR("x en programa principal = " + x);
+
+FIN;

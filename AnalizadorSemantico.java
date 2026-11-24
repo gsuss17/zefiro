@@ -94,6 +94,12 @@ public class AnalizadorSemantico {
             analizarListaSentencias(cuerpo);
         }
 
+        if (!"VACIO".equals(tipoRetornoActual) && !garantizaRetorno(cuerpo)) {
+            agregarError(nodoId.linea, nodoId.columna,
+                         "La función '" + nodoId.valor + "' debe retornar un valor de tipo " +
+                         tipoRetornoActual + " en todos sus caminos.");
+        }
+
         tabla.salirAmbito();
         tipoRetornoActual = tipoAnterior;
     }
@@ -398,6 +404,10 @@ public class AnalizadorSemantico {
                                  "'" + expr.valor + "' es una función; debe invocarse con '()'.");
                     return "ERROR";
                 }
+                if (!sym.inicializada) {
+                    agregarError(expr.linea, expr.columna,
+                                 "La variable '" + expr.valor + "' podría no haber sido inicializada.");
+                }
                 return sym.tipo;
             }
             case "LLAMADA_FUNCION":
@@ -462,19 +472,12 @@ public class AnalizadorSemantico {
                 case "OP_RESTA":
                 case "OP_MULT":
                 case "OP_DIV":
+                case "OP_MOD":
                     if (esNumerico(t1) && esNumerico(t2)) {
                         return ("DECIMAL".equals(t1) || "DECIMAL".equals(t2)) ? "DECIMAL" : "ENTERO";
                     }
                     agregarError(expr.linea, expr.columna,
                                  "Operación aritmética inválida entre " + t1 + " y " + t2 + ".");
-                    return "ERROR";
-
-                case "OP_MOD":
-                    if ("ENTERO".equals(t1) && "ENTERO".equals(t2)) {
-                        return "ENTERO";
-                    }
-                    agregarError(expr.linea, expr.columna,
-                                 "El operador '%' requiere operandos ENTERO, se recibió " + t1 + " y " + t2 + ".");
                     return "ERROR";
 
                 case "OP_MENOR":
@@ -508,6 +511,29 @@ public class AnalizadorSemantico {
             }
         }
         return "ERROR";
+    }
+
+    private boolean garantizaRetorno(Nodo lista) {
+        if (lista == null) return false;
+        for (Nodo s : lista.hijos) {
+            if (!"SENTENCIA".equals(s.etiqueta) || s.hijos.isEmpty()) continue;
+            Nodo p = s.hijos.get(0);
+            if ("RETORNAR".equals(p.etiqueta)) {
+                return true;
+            }
+            if ("CONDICIONAL".equals(p.etiqueta)) {
+                List<Nodo> bloques = new ArrayList<>();
+                for (Nodo h : p.hijos) {
+                    if ("LISTA_SENTENCIAS".equals(h.etiqueta)) {
+                        bloques.add(h);
+                    }
+                }
+                if (bloques.size() == 2 && garantizaRetorno(bloques.get(0)) && garantizaRetorno(bloques.get(1))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean esNumerico(String tipo) {

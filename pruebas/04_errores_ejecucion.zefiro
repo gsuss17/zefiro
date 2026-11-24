@@ -1,0 +1,11 @@
+INICIO pruebaEjecucion;
+
+    // Pasa fases léxica, sintáctica y semántica, pero falla en tiempo de ejecución
+    ENTERO numerador = 25;
+    ENTERO divisor = 2;
+
+    IMPRIMIR("Intentando dividir entre cero...");
+    ENTERO resultado = numerador / divisor;
+    IMPRIMIR(resultado);
+
+FIN;

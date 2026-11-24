@@ -358,8 +358,19 @@ public class Interprete {
         }
 
         if (expr.hijos.size() == 3) {
-            Object v1 = evaluarExpresion(expr.hijos.get(0));
             String op = expr.hijos.get(1).etiqueta;
+            if ("OP_Y".equals(op)) {
+                Object v1 = evaluarExpresion(expr.hijos.get(0));
+                if (!Boolean.TRUE.equals(v1)) return Boolean.FALSE;
+                return Boolean.TRUE.equals(evaluarExpresion(expr.hijos.get(2)));
+            }
+            if ("OP_O".equals(op)) {
+                Object v1 = evaluarExpresion(expr.hijos.get(0));
+                if (Boolean.TRUE.equals(v1)) return Boolean.TRUE;
+                return Boolean.TRUE.equals(evaluarExpresion(expr.hijos.get(2)));
+            }
+
+            Object v1 = evaluarExpresion(expr.hijos.get(0));
             Object v2 = evaluarExpresion(expr.hijos.get(2));
 
             switch (op) {
@@ -395,11 +406,16 @@ public class Interprete {
                         return ((Number) v1).intValue() / i2;
                     }
 
-                case "OP_MOD": {
-                    int i2 = ((Number) v2).intValue();
-                    if (i2 == 0) throw new ErrorEjecucion("Línea " + expr.linea + ": Módulo entre cero.");
-                    return ((Number) v1).intValue() % i2;
-                }
+                case "OP_MOD":
+                    if (v1 instanceof Double || v2 instanceof Double) {
+                        double d2 = ((Number) v2).doubleValue();
+                        if (d2 == 0.0) throw new ErrorEjecucion("Línea " + expr.linea + ": Módulo entre cero.");
+                        return ((Number) v1).doubleValue() % d2;
+                    } else {
+                        int i2 = ((Number) v2).intValue();
+                        if (i2 == 0) throw new ErrorEjecucion("Línea " + expr.linea + ": Módulo entre cero.");
+                        return ((Number) v1).intValue() % i2;
+                    }
 
                 case "OP_MENOR":
                     return ((Number) v1).doubleValue() < ((Number) v2).doubleValue();

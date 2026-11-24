@@ -21,6 +21,22 @@ parser code {:
             }
         }
 
+        // Respaldo: si CUP filtra todos los símbolos en validate_expected_symbol(),
+        // consultamos directamente la fila actual de action_tab.
+        if (nombresEsperados.isEmpty() && !stack.isEmpty()) {
+            int estado = ((Symbol) stack.peek()).parse_state;
+            short[] fila = action_tab[estado];
+            for (int i = 0; i + 1 < fila.length && fila[i] != -1; i += 2) {
+                int id = fila[i];
+                if (id != sym.error && id != sym.EOF && id >= 0 && id < sym.terminalNames.length) {
+                    String desc = describirToken(id, sym.terminalNames[id]);
+                    if (!nombresEsperados.contains(desc)) {
+                        nombresEsperados.add(desc);
+                    }
+                }
+            }
+        }
+
         String listaEsperados = nombresEsperados.isEmpty()
                                 ? "Ninguno"
                                 : String.join(", ", nombresEsperados);

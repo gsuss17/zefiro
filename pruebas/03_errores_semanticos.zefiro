@@ -1,0 +1,55 @@
+INICIO pruebaSemantica;
+
+    FUNCION ENTERO sumar(ENTERO x, ENTERO y)
+        RETORNAR x + y;
+    FINFUNCION;
+
+    //FUNCION VACIO avisar()
+    //    RETORNAR 42;
+    //FINFUNCION;
+
+    // 1. Redeclaración en el mismo ámbito
+    //ENTERO a = 5;
+    //ENTERO a = 10;
+
+    // 2. Incompatibilidad de tipos en inicialización y asignación
+    //ENTERO mal_ent = "texto";
+    //BOOLEANO mal_bool = 123;
+    //a = VERDADERO;
+
+    // 3. Variable no declarada
+    //no_declarada = 99;
+    //IMPRIMIR(otra_inexistente);
+
+    // 4. Operaciones con tipos inválidos
+    //DECIMAL mod_mal = 5 % 2.2;
+    //ENTERO resta_mal = "hola" - 5;
+    //BOOLEANO neg_mal = NO 10;
+
+    // 5. Condiciones no booleanas
+    /*
+    ENTERO a = 10;
+    ENTERO b;
+    SI (a > 5)
+        ENTERO a2 = 1;
+        ENTERO b2 = a + a;
+        IMPRIMIR(b2);
+    FINSI;
+    */
+
+    //MIENTRAS ("verdad")
+    //    IMPRIMIR("Ciclo inválido");
+    //FINMIENTRAS;
+
+    // 6. ROMPER, CONTINUAR y RETORNAR fuera de contexto
+    //ROMPER;
+    //CONTINUAR;
+    //RETORNAR 1;
+
+    // 7. Llamadas a funciones con errores
+    //ENTERO r1 = funcionInexistente(1, 2);
+    ENTERO r2 = sumar(1,2);
+    ENTERO r3 = sumar(1, "dos");
+    //IMPRIMIR(r3);
+
+FIN;

@@ -1,0 +1,51 @@
+INICIO pruebaCompleta;
+
+    /*
+       Prueba integral de características válidas de Zefiro:
+       - Tipos: ENTERO, DECIMAL, CADENA, BOOLEANO
+       - Operadores: +, -, *, /, %, menos unario, relacionales, Y, O, NO
+       - Cadenas con secuencias de escape y concatenación
+       - Bloques vacíos, SI/SINO, MIENTRAS, PARA, ROMPER, CONTINUAR
+    */
+
+    ENTERO a = 15, b = 4;
+    DECIMAL c = -2.5;
+    BOOLEANO activo = VERDADERO;
+    CADENA texto = "Linea1\n\t\"Zefiro\"";
+
+    IMPRIMIR(texto);
+    IMPRIMIR("Suma: " + (a + b) + " | Modulo: " + (a % b));
+    IMPRIMIR("Decimal negativo: " + c);
+
+    // Condicional con bloque SINO y lógica booleana
+    SI (NO activo O (a > 10 Y b != 0))
+        IMPRIMIR("Condición lógica cumplida.");
+    SINO
+        IMPRIMIR("No debería entrar aquí.");
+    FINSI;
+
+    // Bloque vacío válido
+    SI (FALSO)
+    FINSI;
+
+    // Ciclo PARA con CONTINUAR y ROMPER
+    ENTERO acum = 0;
+    PARA (ENTERO i = 1; i <= 10; i = i + 1)
+        SI (i % 2 != 0)
+            CONTINUAR;
+        FINSI;
+        SI (i > 6)
+            ROMPER;
+        FINSI;
+        acum = acum + i;
+    FINPARA;
+    IMPRIMIR("Suma de pares hasta 6: " + acum);
+
+    // Ciclo MIENTRAS
+    ENTERO cuenta = 3;
+    MIENTRAS (cuenta > 0)
+        IMPRIMIR("Cuenta regresiva: " + cuenta);
+        cuenta = cuenta - 1;
+    FINMIENTRAS;
+
+FIN;

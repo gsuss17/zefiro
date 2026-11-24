@@ -86,34 +86,34 @@ public class Main {
         System.out.println("                       FASE 2: ANÁLISIS SINTÁCTICO                         ");
         System.out.println("==========================================================================");
 
-        if (erroresLexicosTotal > 0) {
-            System.out.println("[AVISO] Existen errores léxicos previos. El parser intentará recuperarse,");
-            System.out.println("        pero pueden presentarse errores sintácticos inducidos por tokens erróneos.\n");
-        }
-
         int erroresSintacticosTotal = 0;
         Nodo arbolSintactico = null;
         Nodo.resetearContador();
 
-        try (InputStreamReader readerParser = new InputStreamReader(new FileInputStream(archivo), StandardCharsets.UTF_8)) {
-            Lexer lexerSintactico = new Lexer(readerParser);
-            parser p = new parser(lexerSintactico);
+        if (erroresLexicosTotal > 0) {
+            System.out.println("[OMITIDO] No se ejecuta el análisis sintáctico porque existen errores léxicos.");
+            System.out.println("          Corrige los errores léxicos para continuar con la compilación.");
+        } else {
+            try (InputStreamReader readerParser = new InputStreamReader(new FileInputStream(archivo), StandardCharsets.UTF_8)) {
+                Lexer lexerSintactico = new Lexer(readerParser);
+                parser p = new parser(lexerSintactico);
 
-            Symbol resultado = p.parse();
-            erroresSintacticosTotal = p.erroresSintacticos;
+                Symbol resultado = p.parse();
+                erroresSintacticosTotal = p.erroresSintacticos;
 
-            if (resultado != null && resultado.value instanceof Nodo) {
-                arbolSintactico = (Nodo) resultado.value;
-            } else {
-                arbolSintactico = p.raizAST;
+                if (resultado != null && resultado.value instanceof Nodo) {
+                    arbolSintactico = (Nodo) resultado.value;
+                } else {
+                    arbolSintactico = p.raizAST;
+                }
+
+                if (erroresSintacticosTotal == 0 && arbolSintactico != null) {
+                    System.out.println("[ÉXITO SINTÁCTICO] La estructura del programa cumple con la gramática.");
+                }
+            } catch (Exception e) {
+                System.out.println(" -> Error no recuperable en análisis sintáctico: " + e.getMessage());
+                erroresSintacticosTotal++;
             }
-
-            if (erroresSintacticosTotal == 0 && arbolSintactico != null) {
-                System.out.println("[ÉXITO SINTÁCTICO] La estructura del programa cumple con la gramática.");
-            }
-        } catch (Exception e) {
-            System.out.println(" -> Error no recuperable en análisis sintáctico: " + e.getMessage());
-            erroresSintacticosTotal++;
         }
 
         // ======================================================================

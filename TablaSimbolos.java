@@ -35,6 +35,13 @@ public class TablaSimbolos {
         if (actual == null || actual.containsKey(simbolo.nombre)) {
             return false;
         }
+        // Estilo Java: no permitir sombrear variables/parámetros de ámbitos contenedores
+        if (!"FUNCION".equals(simbolo.categoria)) {
+            Simbolo existente = buscar(simbolo.nombre);
+            if (existente != null && !"FUNCION".equals(existente.categoria)) {
+                return false;
+            }
+        }
         actual.put(simbolo.nombre, simbolo);
         historial.add(simbolo);
         return true;

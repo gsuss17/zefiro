@@ -1,0 +1,25 @@
+INICIO pruebaSintactica;
+
+    // 1. Falta de punto y coma al final de la sentencia
+    ENTERO a = 10;
+    ENTERO b = 20;
+
+    // 2. Declaración y asignación incompletas
+    //ENTERO = 5;
+    //b = ;
+
+    // 3. Paréntesis desbalanceados en expresión y condicional
+    //ENTERO c = (a + b * 2;
+    //SI (a < b
+    //    IMPRIMIR("Falta paréntesis de cierre");
+    //FINSI;
+
+    // 4. Ciclo PARA mal formado
+    //PARA (ENTERO i = 0; i < 5; i = i + 1)
+    //    IMPRIMIR(i);
+    //FINPARA;
+
+    // 5. Sentencia válida posterior para comprobar recuperación de errores
+    //IMPRIMIR("Fin de prueba sintáctica");
+
+FIN;
