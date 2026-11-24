@@ -1,0 +1,96 @@
+==========================================================================
+                     TABLA OFICIAL DE TOKENS - ZEFIRO
+==========================================================================
+Referencia generada a partir de Lexer.flex y Parser.cup (sym.java).
+
+1. PALABRAS RESERVADAS
+--------------------------------------------------------------------------
+TOKEN              | LEXEMA        | DESCRIPCIÓN
+--------------------------------------------------------------------------
+PR_INICIO          | INICIO        | Inicio del programa
+PR_FIN             | FIN           | Fin del programa
+PR_TIPO_ENT        | ENTERO        | Tipo de dato entero
+PR_TIPO_DEC        | DECIMAL       | Tipo de dato decimal (punto flotante)
+PR_TIPO_CAD        | CADENA        | Tipo de dato cadena de texto
+PR_TIPO_BOOL       | BOOLEANO      | Tipo de dato booleano
+PR_VACIO           | VACIO         | Tipo de retorno vacío para funciones
+PR_SI              | SI            | Inicio de sentencia condicional
+PR_SINO            | SINO          | Rama alternativa de condicional
+PR_FINSI           | FINSI         | Cierre de bloque condicional
+PR_MIENTRAS        | MIENTRAS      | Inicio de ciclo mientras
+PR_FIN_MIE         | FINMIENTRAS   | Cierre de ciclo mientras
+PR_PARA            | PARA          | Inicio de ciclo para
+PR_FIN_PARA        | FINPARA       | Cierre de ciclo para
+PR_ROMPER          | ROMPER        | Interrumpe la ejecución de un ciclo
+PR_CONTINUAR       | CONTINUAR     | Salta a la siguiente iteración del ciclo
+PR_FUNCION         | FUNCION       | Declaración de función
+PR_FIN_FUNCION     | FINFUNCION    | Cierre de declaración de función
+PR_RETORNAR        | RETORNAR      | Devuelve un valor o finaliza una función
+PR_LEER            | LEER          | Lectura desde entrada estándar
+PR_IMPRIMIR        | IMPRIMIR      | Escritura en salida estándar
+
+2. OPERADORES ARITMÉTICOS Y ASIGNACIÓN
+--------------------------------------------------------------------------
+TOKEN              | LEXEMA        | DESCRIPCIÓN
+--------------------------------------------------------------------------
+OP_SUMA            | +             | Suma numérica o concatenación de cadenas
+OP_RESTA           | -             | Resta numérica o menos unario
+OP_MULT            | *             | Multiplicación
+OP_DIV             | /             | División
+OP_MOD             | %             | Módulo (residuo)
+OP_ASIGNA          | =             | Asignación de valor
+
+3. OPERADORES RELACIONALES
+--------------------------------------------------------------------------
+TOKEN              | LEXEMA        | DESCRIPCIÓN
+--------------------------------------------------------------------------
+OP_IGUAL           | ==            | Igualdad
+OP_DIFERENTE       | !=            | Desigualdad
+OP_MENOR           | <             | Menor que
+OP_MENOR_IGUAL     | <=            | Menor o igual que
+OP_MAYOR           | >             | Mayor que
+OP_MAYOR_IGUAL     | >=            | Mayor o igual que
+
+4. OPERADORES LÓGICOS
+--------------------------------------------------------------------------
+TOKEN              | LEXEMA        | DESCRIPCIÓN
+--------------------------------------------------------------------------
+OP_Y               | Y             | Conjunción lógica (cortocircuito)
+OP_O               | O             | Disyunción lógica (cortocircuito)
+OP_NO              | NO            | Negación lógica
+
+5. DELIMITADORES
+--------------------------------------------------------------------------
+TOKEN              | LEXEMA        | DESCRIPCIÓN
+--------------------------------------------------------------------------
+DEL_P_COMA         | ;             | Fin de sentencia o bloque
+DEL_COMA           | ,             | Separador de variables, parámetros o argumentos
+DEL_PAR_IZQ        | (             | Paréntesis izquierdo
+DEL_PAR_DER        | )             | Paréntesis derecho
+
+6. LITERALES E IDENTIFICADORES
+--------------------------------------------------------------------------
+TOKEN              | PATRÓN / LEXEMA                | DESCRIPCIÓN
+--------------------------------------------------------------------------
+ID                 | [a-z][a-zA-Z0-9_]*             | Identificador (inicia en minúscula)
+LIT_ENTERO         | [0-9]+                         | Literal numérico entero
+LIT_DECIMAL        | [0-9]+\.[0-9]+                 | Literal numérico decimal
+LIT_CADENA         | "([^"\\\n\r]|(\\.))*"          | Literal de cadena de texto
+LIT_VERDADERO      | VERDADERO                      | Literal booleano verdadero
+LIT_FALSO          | FALSO                          | Literal booleano falso
+
+7. TOKENS INTERNOS DE CUP (NO EMITIDOS COMO LEXEMAS DE LENGUAJE)
+--------------------------------------------------------------------------
+TOKEN              | USO
+--------------------------------------------------------------------------
+EOF                | Fin de archivo
+error              | Token de recuperación ante errores léxicos/sintácticos
+MENOS_UNARIO       | Terminal ficticio para precedencia del '-' unario
+
+8. ELEMENTOS IGNORADOS POR EL LEXER (NO GENERAN TOKEN)
+--------------------------------------------------------------------------
+ELEMENTO           | PATRÓN
+--------------------------------------------------------------------------
+Espacios           | [ \t\r\n\f\u00A0\uFEFF]+
+Comentario línea   | //[^\r\n]*
+Comentario bloque  | /* ... */

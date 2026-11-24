@@ -53,6 +53,8 @@ Al analizar un archivo `.zefiro`, `Main` ejecuta 5 fases en orden:
 
 ## Guía rápida del lenguaje
 
+> Para ver plantillas de código listas para copiar de cada estructura, consulta **[SINTAXIS.md](SINTAXIS.md)**.
+
 - **Estructura de un programa:** Todo programa inicia con `INICIO nombre;` y termina con `FIN;`.
 - **Identificadores:** Deben iniciar con letra minúscula (`[a-z][a-zA-Z0-9_]*`). Las palabras reservadas van en **MAYÚSCULAS**.
 - **Tipos de datos:** `ENTERO`, `DECIMAL`, `CADENA`, `BOOLEANO` (`VERDADERO` / `FALSO`) y `VACIO` (solo para retorno de funciones).
@@ -82,6 +84,8 @@ zefiro/
 ├── Interprete.java             # Intérprete del lenguaje
 ├── Main.java                   # Orquestador de las 5 fases
 ├── gramatica-bnf.txt           # Gramática formal en notación BNF
+├── tokens.txt                  # Lista oficial de todos los tokens del lenguaje
+├── SINTAXIS.md                 # Guía de sintaxis y plantillas de código
 ├── becas.zefiro                # Programa interactivo de ejemplo
 ├── ejemplo_completo.zefiro     # Ejemplo con todas las características del lenguaje
 ├── ejecutar.bat                # Script de compilación y ejecución en Windows

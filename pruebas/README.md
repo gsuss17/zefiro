@@ -2,6 +2,8 @@
 
 Esta carpeta reúne programas de ejemplo diseñados para comprobar que cada fase del compilador e intérprete detecte los errores esperados y ejecute correctamente los programas válidos.
 
+> Si buscas plantillas de código para escribir tus propios programas, consulta **[../SINTAXIS.md](../SINTAXIS.md)**.
+
 ---
 
 ## Archivos incluidos
